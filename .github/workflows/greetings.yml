@@ -1,0 +1,48 @@
+name: 🤝 Greet New Contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Greet First Time Contributors
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Olá! Obrigado por abrir sua primeira issue no **Verse-Musa**! 
+            
+            Ficamos felizes em ter você aqui. Sua contribuição é muito importante para nós! 🙏
+            
+            Um mantenedor revisará sua issue em breve. Enquanto isso, sinta-se à vontade para:
+            - 📚 Explorar nossa [documentação](https://github.com/DARIO-engineer/Verse-Musa/tree/main/docs)
+            - 💬 Participar das [discussões](https://github.com/DARIO-engineer/Verse-Musa/discussions)
+            - 🤝 Ler nosso [guia de contribuição](https://github.com/DARIO-engineer/Verse-Musa/blob/main/CONTRIBUTING.md)
+            
+            *"Tudo quanto te vier à mão para fazer, faze-o conforme as tuas forças."* - Eclesiastes 9:10
+            
+            Que Deus abençoe! ✨
+          pr-message: |
+            👋 Obrigado por abrir seu primeiro Pull Request no **Verse-Musa**! 
+            
+            Ficamos muito felizes com sua contribuição! 🎉
+            
+            Um mantenedor revisará seu PR em breve. Enquanto isso, certifique-se de que:
+            - ✅ Você seguiu nosso [guia de contribuição](https://github.com/DARIO-engineer/Verse-Musa/blob/main/CONTRIBUTING.md)
+            - ✅ Todos os testes estão passando
+            - ✅ O código está bem documentado
+            - ✅ Você atualizou a documentação se necessário
+            
+            Agradecemos seu tempo e esforço para tornar o Verse-Musa melhor! 🙏
+            
+            *"Como cada um recebeu um dom, usem-no para servir uns aos outros."* - 1 Pedro 4:10
+            
+            Que Deus abençoe seu trabalho! ✨

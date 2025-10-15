@@ -1,0 +1,73 @@
+name: 🧹 Mark Stale Issues and PRs
+
+on:
+  schedule:
+    # Run daily at 1:00 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Issues configuration
+          stale-issue-message: |
+            👋 Olá! Esta issue está marcada como inativa porque não houve atividade por 60 dias.
+            
+            Se a issue ainda é relevante, por favor:
+            - 💬 Adicione um comentário para mantê-la ativa
+            - 🔄 Atualize com novas informações
+            - 🏷️ Adicione labels relevantes
+            
+            Caso contrário, ela será fechada em 14 dias.
+            
+            Obrigado por sua contribuição! 🙏
+          close-issue-message: |
+            Esta issue foi fechada automaticamente devido à inatividade por 74 dias.
+            
+            Se você ainda está enfrentando este problema ou quer continuar a discussão:
+            - 🔓 Reabra a issue
+            - 💬 Adicione novas informações
+            - 📝 Crie uma nova issue com contexto atualizado
+            
+            Obrigado! 💝
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: 'stale'
+          exempt-issue-labels: 'pinned,security,roadmap'
+          
+          # Pull requests configuration
+          stale-pr-message: |
+            👋 Olá! Este Pull Request está marcado como inativo porque não houve atividade por 30 dias.
+            
+            Para manter este PR ativo, por favor:
+            - 💬 Adicione um comentário
+            - 🔄 Atualize com as últimas mudanças da branch main
+            - ✅ Resolva conflitos de merge se houver
+            
+            Caso contrário, ele será fechado em 7 dias.
+            
+            Agradecemos sua contribuição! 🙏
+          close-pr-message: |
+            Este Pull Request foi fechado automaticamente devido à inatividade por 37 dias.
+            
+            Se você ainda quer que este PR seja merged:
+            - 🔓 Reabra o PR
+            - 🔄 Atualize com as últimas mudanças
+            - 💬 Deixe um comentário explicando o status
+            
+            Obrigado pelo seu tempo e esforço! 💝
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-pr-label: 'stale'
+          exempt-pr-labels: 'pinned,security,in-progress'
+          
+          # Operations per run (prevent rate limiting)
+          operations-per-run: 100

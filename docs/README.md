@@ -7,7 +7,7 @@ Bem-vindo à documentação do Verse-Musa! Aqui você encontrará informações 
 ### Para Usuários
 - [Guia de Instalação](INSTALLATION.md) *(em breve)*
 - [Guia do Usuário](USER_GUIDE.md) *(em breve)*
-- [Perguntas Frequentes (FAQ)](FAQ.md) *(em breve)*
+- [Perguntas Frequentes (FAQ)](FAQ.md)
 - [Solução de Problemas](TROUBLESHOOTING.md) *(em breve)*
 
 ### Para Desenvolvedores
@@ -19,8 +19,9 @@ Bem-vindo à documentação do Verse-Musa! Aqui você encontrará informações 
 
 ### Sobre o Projeto
 - [Visão Geral](OVERVIEW.md)
-- [Roadmap](ROADMAP.md) *(em breve)*
+- [Roadmap](ROADMAP.md)
 - [Histórico de Versões](../CHANGELOG.md)
+- [Autores e Contribuidores](../AUTHORS.md)
 
 ### Segurança e Políticas
 - [Política de Segurança](../SECURITY.md)
@@ -50,10 +51,12 @@ A documentação é uma parte vital do projeto! Se você encontrar erros, tiver 
 | CODE_OF_CONDUCT.md | ✅ Completo | 2025-01-15 |
 | SECURITY.md | ✅ Completo | 2025-01-15 |
 | OVERVIEW.md | ✅ Completo | 2025-01-15 |
+| ROADMAP.md | ✅ Completo | 2025-01-15 |
+| FAQ.md | ✅ Completo | 2025-01-15 |
+| AUTHORS.md | ✅ Completo | 2025-01-15 |
 | ARCHITECTURE.md | 🚧 Em breve | - |
 | USER_GUIDE.md | 🚧 Em breve | - |
 | API.md | 🚧 Em breve | - |
-| FAQ.md | 🚧 Em breve | - |
 
 **Legenda:**
 - ✅ Completo
