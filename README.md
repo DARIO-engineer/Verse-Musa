@@ -10,7 +10,7 @@ App cristão para rascunhos literários. Um espaço onde a fé se expressa em pa
 
 - Node.js (versão 16 ou superior)
 - npm ou yarn
-- Android Studio (para Android) / Xcode (para iOS)
+- Android Studio (para Android)
 
 ### Instalação
 
