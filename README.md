@@ -62,6 +62,16 @@ Possíveis tecnologias a serem utilizadas:
 
 ---
 
+## 🚀 Início Rápido
+
+Quer começar agora? Veja nosso [Guia de Início Rápido](QUICK_START.md) para:
+- 📖 Entender o projeto rapidamente
+- 👨‍💻 Configurar seu ambiente de desenvolvimento
+- 🎯 Encontrar formas de contribuir
+- 💬 Se conectar com a comunidade
+
+---
+
 ## 📦 Instalação
 
 > **Nota**: O projeto está em fase inicial de desenvolvimento. Instruções de instalação serão adicionadas assim que o código estiver disponível.
