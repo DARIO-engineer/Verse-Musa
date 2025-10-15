@@ -37,11 +37,6 @@ App cristão para rascunhos literários. Um espaço onde a fé se expressa em pa
      ```bash
      npx react-native run-android
      ```
-   - iOS:
-     ```bash
-     cd ios && pod install && cd ..
-     npx react-native run-ios
-     ```
 
 ## 📄 Licença
 
