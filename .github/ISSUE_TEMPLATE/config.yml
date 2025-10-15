@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussões da Comunidade
+    url: https://github.com/DARIO-engineer/Verse-Musa/discussions
+    about: Para perguntas gerais e discussões sobre o projeto
+  - name: 🔒 Reportar Vulnerabilidade de Segurança
+    url: https://github.com/DARIO-engineer/Verse-Musa/security/advisories/new
+    about: Por favor, reporte vulnerabilidades de segurança de forma privada
