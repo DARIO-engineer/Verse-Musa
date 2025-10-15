@@ -81,6 +81,9 @@ yarn-error.log*
 # Production
 /build
 
+# Build directories
+**/dist/
+
 # Local development
 .env.local
 .env.development.local
@@ -104,4 +107,3 @@ dist-ssr/
 *.orig.*
 web-build/
 web-report/
-Verse/

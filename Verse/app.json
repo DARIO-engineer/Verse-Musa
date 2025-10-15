@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Verse & Musa",
+    "slug": "VersoEMusa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/musa.png",
+    "userInterfaceStyle": "light",
+    "sdkVersion": "54.0.0",
+    "splash": {
+      "image": "./assets/musa.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "assets/musa.png",
+      "assets/logo.png",
+      "assets/notification-icon.png",
+      "assets/favicon.png"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/musa.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.darpimen.VersoEMusa",
+      "buildType": "apk",
+      "gradleCommand": ":app:assembleRelease",
+      "enableAapt2": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#4FC3F7"
+        }
+      ],
+      "expo-font",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8e517c77-dfb8-46d8-a81f-cb43c95ebb6d"
+      },
+      "firebaseApiKey": "AIzaSyBq4jcP5Zgnjk7Gn5spSSrlbAb2e4JQU-M",
+      "firebaseAuthDomain": "verso-e-musa-b2976.firebaseapp.com",
+      "firebaseProjectId": "verso-e-musa-b2976",
+      "firebaseStorageBucket": "verso-e-musa-b2976.firebasestorage.app",
+      "firebaseMessagingSenderId": "626922109603",
+      "firebaseAppId": "1:626922109603:android:acd0e1b0673c664925dd16",
+      "firebaseMeasurementId": "SEU_MEASUREMENT_ID_AQUI"
+    }
+  }
+}
