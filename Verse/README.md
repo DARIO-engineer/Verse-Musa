@@ -48,8 +48,6 @@ Muse/
 ## 🛠️ Scripts Disponíveis
 - `npm start` - Inicia o servidor de desenvolvimento
 - `npm run android` - Executa no Android
-- `npm run ios` - Executa no iOS
-- `npm run web` - Executa na web
 
 ## 📚 Documentação
 Consulte a pasta `docs/` para documentação detalhada sobre:
@@ -57,10 +55,6 @@ Consulte a pasta `docs/` para documentação detalhada sobre:
 - Documentação de APIs
 - Guias de navegação e uso
 
-## 🧪 Testes
-Os arquivos de teste estão na pasta `tests/` e incluem:
-- Testes de API (Gemini, Claude, GPT)
-- Scripts de validação
 
 ## 🔧 Configuração
 1. Clone o repositório
