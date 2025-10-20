@@ -7,7 +7,7 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../styles/De
 import { useSettings } from '../contexts/SettingsContext';
 import { useApp } from '../contexts/AppContext';
 import { DraftService, Draft } from '../services/DraftService';
-import { PDFService } from '../services/PDFService';
+// import { PDFService } from '../services/PDFService'; // REMOVIDO
 
 type ViewDraftRouteProp = RouteProp<{ params: { draftId?: string; draft?: any } }, 'params'>;
 
@@ -53,27 +53,6 @@ const ViewDraftScreen: React.FC = () => {
     else setLoading(false);
   }, [draftId, serializedDraft]);
 
-  const handleDownloadPDF = async () => {
-    if (!draft) return;
-
-    try {
-      const stats = PDFService.getPoemStats(draft.content);
-      const poemData = {
-        title: draft.title || 'Obra sem título',
-        content: draft.content,
-        author: profile?.name || 'Poeta',
-        date: new Date().toISOString(),
-        wordCount: stats.wordCount,
-        verseCount: stats.verseCount,
-        category: draft.category || 'Poesia',
-      };
-
-      await PDFService.generatePoemPDF(poemData, { share: false }); // share: false para baixar
-    } catch (error) {
-      console.error('Erro ao baixar PDF:', error);
-      Alert.alert('Erro', 'Não foi possível baixar o PDF. Tente novamente.');
-    }
-  };
 
   if (loading || !draft) {
     return (
@@ -100,16 +79,6 @@ const ViewDraftScreen: React.FC = () => {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={handleDownloadPDF}
-            style={{ 
-              padding: Spacing.sm, 
-              borderRadius: BorderRadius.full,
-              marginRight: Spacing.xs,
-            }}
-          >
-            <Ionicons name="download-outline" size={20} color={Colors.primary} />
-          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => (navigation as any).navigate('EditDraft', { draftId: draft.id })}

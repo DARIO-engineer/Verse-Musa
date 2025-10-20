@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   TextInput,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,7 +30,6 @@ const ProfileScreenEnhanced: React.FC = () => {
     name: profile?.name || '',
     bio: profile?.bio || '',
     inspirationQuote: profile?.inspirationQuote || '',
-    photoUri: profile?.photoUri || '',
   });
 
   const themeColors = getActiveThemeColors();
@@ -53,7 +51,6 @@ const ProfileScreenEnhanced: React.FC = () => {
       name: profile?.name || '',
       bio: profile?.bio || '',
       inspirationQuote: profile?.inspirationQuote || '',
-      photoUri: profile?.photoUri || '',
     });
   }, [profile]);
 
@@ -84,15 +81,6 @@ const ProfileScreenEnhanced: React.FC = () => {
   const renderAvatar = (size = 80) => {
     const name = profile?.name || 'Poeta Anônimo';
     const initial = name.charAt(0).toUpperCase();
-    
-    if (profile?.photoUri) {
-      return (
-        <Image
-          source={{ uri: profile.photoUri }}
-          style={{ width: size, height: size, borderRadius: size / 2 }}
-        />
-      );
-    }
     
     return (
       <View
@@ -159,17 +147,6 @@ const ProfileScreenEnhanced: React.FC = () => {
         <ScrollView style={{ flex: 1, padding: Spacing.lg }}>
           <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
             {renderAvatar(100)}
-            <TouchableOpacity style={{
-              marginTop: Spacing.md,
-              paddingHorizontal: Spacing.md,
-              paddingVertical: Spacing.sm,
-              backgroundColor: themeColors.primary,
-              borderRadius: BorderRadius.full,
-            }}>
-              <Text style={{ color: Colors.white, fontSize: Typography.fontSize.sm }}>
-                Alterar Foto
-              </Text>
-            </TouchableOpacity>
           </View>
 
           <View style={{ marginBottom: Spacing.lg }}>

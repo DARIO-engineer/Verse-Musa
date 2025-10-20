@@ -62,7 +62,7 @@ type EditDraftScreenRouteProp = RouteProp<{ params: { draftId?: string; draft?: 
 const EditDraftScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<EditDraftScreenRouteProp>();
-  const { activeTheme } = useSettings();
+  const { activeTheme, settings } = useSettings();
   const { refreshDrafts, updateDraftOptimistic } = useDrafts();
   const isDark = activeTheme === 'dark';
   
@@ -94,6 +94,7 @@ const EditDraftScreen: React.FC = () => {
   const [originalTypeId, setOriginalTypeId] = useState('poesia');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [isSavingBlocked, setIsSavingBlocked] = useState(false); // Flag para bloquear salvamento
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -331,16 +332,18 @@ const EditDraftScreen: React.FC = () => {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    // Só faz auto-save se tiver conteúdo e mudanças
-    if ((title.trim() || content.trim()) && hasUnsavedChanges) {
+    // Só faz auto-save se estiver habilitado nas configurações E tiver conteúdo, mudanças E o salvamento não estiver bloqueado
+    if (settings.autoSaveEnabled && (title.trim() || content.trim()) && hasUnsavedChanges && !showUnsavedModal && !isSavingBlocked) {
       autoSaveTimeoutRef.current = setTimeout(() => {
         console.log('🔄 Auto-salvando rascunho...');
         handleSave(false, false); // Auto-save sem toast
         setIsAutoSaving(true);
         setTimeout(() => setIsAutoSaving(false), 1000); // Mostra indicador por 1 segundo
       }, 5000); // Aumentado para 5 segundos
+    } else if (!settings.autoSaveEnabled && hasUnsavedChanges) {
+      console.log('⚠️ Auto-save desabilitado nas configurações');
     }
-  }, [title, content, hasUnsavedChanges]);
+  }, [title, content, hasUnsavedChanges, showUnsavedModal, isSavingBlocked, settings.autoSaveEnabled]);
 
   // Carregar templates do usuário quando o modal de templates é aberto
   useEffect(() => {
@@ -407,6 +410,12 @@ const EditDraftScreen: React.FC = () => {
   };
 
   const handleSave = async (thenGoBack = false, showToast = true) => {
+    // Bloquear salvamento se o modal estiver aberto (exceto quando explicitamente chamado pelo modal)
+    if (isSavingBlocked && !thenGoBack) {
+      console.log('🚫 Salvamento bloqueado - modal aberto');
+      return;
+    }
+
     if (!title.trim()) {
       Alert.alert('Título necessário', 'Por favor, adicione um título ao seu poema.');
       return;
@@ -480,15 +489,31 @@ const EditDraftScreen: React.FC = () => {
 
   // Função para salvar e sair
   const handleSaveAndExit = () => {
+    console.log('💾 Salvando e saindo...');
+    setIsSavingBlocked(false); // Permitir salvamento
     setShowUnsavedModal(false);
     handleSave(true, true); // Salva, sai e mostra toast
   };
 
   // Função para descartar mudanças e sair
   const handleDiscardAndExit = () => {
-    setShowUnsavedModal(false);
-    setHasUnsavedChanges(false); // Desativa o listener beforeRemove
     console.log('🗑️ Descartando mudanças e saindo...');
+    setIsSavingBlocked(false); // Desbloquear salvamento
+    setShowUnsavedModal(false);
+    
+    // Limpar timeout de auto-save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    
+    // Restaurar conteúdo original
+    setTitle(originalTitle);
+    setContent(originalContent);
+    setSelectedTypeId(originalTypeId);
+    
+    // Desativar flag de mudanças não salvas
+    setHasUnsavedChanges(false);
     
     // Garantir que o estado seja atualizado antes de navegar
     setTimeout(() => {
@@ -498,7 +523,15 @@ const EditDraftScreen: React.FC = () => {
 
   // Função para cancelar e continuar editando
   const handleCancelExit = () => {
+    console.log('❌ Cancelando saída - continuando edição');
+    setIsSavingBlocked(false); // Desbloquear salvamento
     setShowUnsavedModal(false);
+    
+    // Limpar qualquer timeout de auto-save pendente
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
   };
 
   const mapTemplateToTypeId = (templateName: string): string => {
@@ -1847,6 +1880,15 @@ const EditDraftScreen: React.FC = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={handleCancelExit}
+        onShow={() => {
+          // Bloquear completamente qualquer salvamento quando modal abrir
+          console.log('🚫 Modal aberto - bloqueando salvamento');
+          setIsSavingBlocked(true);
+          if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+            autoSaveTimeoutRef.current = null;
+          }
+        }}
       >
         <View style={{
           flex: 1,

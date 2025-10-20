@@ -48,6 +48,7 @@ class SimpleChatServiceClass {
   private claudeFailCount = 0;
   private maxGeminiFailures = 3; // Após 3 falhas consecutivas, usar Claude
   private maxClaudeFailures = 3; // Após 3 falhas consecutivas do Claude, usar GPT
+  private temporaryConversations: Map<string, ChatConversation> = new Map(); // Conversas temporárias
 
   constructor() {
     this.initialize();
@@ -55,6 +56,9 @@ class SimpleChatServiceClass {
 
   private async initialize() {
     try {
+      // Verificar se a cota foi excedida hoje
+      await this.checkQuotaStatus();
+      
       if (API_KEY && API_KEY.startsWith('AIza')) {
         this.genAI = new GoogleGenerativeAI(API_KEY);
         this.isInitialized = true;
@@ -66,6 +70,28 @@ class SimpleChatServiceClass {
     } catch (error) {
       console.error('❌ Erro ao inicializar Musa AI:', error);
       this.isInitialized = false;
+    }
+  }
+
+  private async checkQuotaStatus() {
+    try {
+      const quotaExceededDate = await AsyncStorage.getItem(QUOTA_EXCEEDED_KEY);
+      if (quotaExceededDate) {
+        const exceededDate = new Date(quotaExceededDate);
+        const today = new Date();
+        
+        // Se foi excedida hoje, marcar como excedida
+        if (exceededDate.toDateString() === today.toDateString()) {
+          this.quotaExceededToday = true;
+          console.log('⚠️ Cota do Gemini já foi excedida hoje, usando fallbacks');
+        } else {
+          // Se foi em outro dia, resetar
+          this.quotaExceededToday = false;
+          await AsyncStorage.removeItem(QUOTA_EXCEEDED_KEY);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar status da cota:', error);
     }
   }
 
@@ -114,7 +140,7 @@ class SimpleChatServiceClass {
     }
   }
 
-  async createConversation(): Promise<ChatConversation> {
+  async createConversation(saveToHistory: boolean = false): Promise<ChatConversation> {
     const conversation: ChatConversation = {
       id: this.generateId(),
       title: 'Nova Conversa',
@@ -131,16 +157,30 @@ class SimpleChatServiceClass {
       updatedAt: new Date()
     };
 
-    const conversations = await this.loadConversations();
-    conversations.unshift(conversation);
-    await this.saveConversations(conversations);
+    // Só salvar no histórico se solicitado (após primeira mensagem do usuário)
+    if (saveToHistory) {
+      const conversations = await this.loadConversations();
+      conversations.unshift(conversation);
+      await this.saveConversations(conversations);
+    } else {
+      // Armazenar temporariamente até primeira mensagem do usuário
+      this.temporaryConversations.set(conversation.id, conversation);
+    }
 
     return conversation;
   }
 
   async getConversation(id: string): Promise<ChatConversation | null> {
+    // Primeiro buscar nas conversas salvas
     const conversations = await this.loadConversations();
-    return conversations.find(conv => conv.id === id) || null;
+    const savedConversation = conversations.find(conv => conv.id === id);
+    
+    if (savedConversation) {
+      return savedConversation;
+    }
+    
+    // Se não encontrou, buscar nas conversas temporárias
+    return this.temporaryConversations.get(id) || null;
   }
 
   async sendMessage(conversationId: string, userMessage: string, customSystemPrompt?: string): Promise<SimpleChatMessage> {
@@ -148,13 +188,21 @@ class SimpleChatServiceClass {
       console.log(`📤 Enviando mensagem para conversa: ${conversationId}`);
       
       const conversations = await this.loadConversations();
-      const conversationIndex = conversations.findIndex(conv => conv.id === conversationId);
+      let conversationIndex = conversations.findIndex(conv => conv.id === conversationId);
+      let conversation: ChatConversation;
+      let isFirstUserMessage = false;
       
       if (conversationIndex === -1) {
-        throw new Error('Conversa não encontrada');
+        // Se a conversa não existe no histórico, buscar por ID temporário ou criar nova
+        const tempConversation = await this.getConversation(conversationId);
+        if (!tempConversation) {
+          throw new Error('Conversa não encontrada');
+        }
+        conversation = tempConversation;
+        isFirstUserMessage = true; // Primeira mensagem do usuário
+      } else {
+        conversation = conversations[conversationIndex];
       }
-
-      const conversation = conversations[conversationIndex];
       const messageId = this.generateId();
 
       // Adicionar mensagem do usuário
@@ -170,7 +218,7 @@ class SimpleChatServiceClass {
       let aiResponse = '';
       let usedAPI = false;
       
-      if (this.isInitialized && this.genAI) {
+      if (this.isInitialized && this.genAI && !this.quotaExceededToday) {
         try {
           console.log('🌐 Tentando usar Google Gemini API...');
           const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -186,7 +234,21 @@ class SimpleChatServiceClass {
           console.log('✅ Resposta gerada com sucesso via Gemini API');
         } catch (apiError: any) {
           console.error('❌ Erro na API Gemini, tentando fallback:', apiError.message);
-          this.geminiFailCount++;
+          
+          // Detectar erro de cota excedida
+          const isQuotaExceeded = apiError.message?.includes('Quota exceeded') || 
+                                 apiError.message?.includes('RATE_LIMIT_EXCEEDED') ||
+                                 apiError.message?.includes('429');
+          
+          if (isQuotaExceeded) {
+            console.log('🚫 Cota do Gemini excedida, tentando Claude imediatamente...');
+            this.geminiFailCount = this.maxGeminiFailures; // Força usar fallback
+            this.quotaExceededToday = true;
+            // Salvar data da cota excedida para evitar tentativas desnecessárias
+            await AsyncStorage.setItem(QUOTA_EXCEEDED_KEY, new Date().toISOString());
+          } else {
+            this.geminiFailCount++;
+          }
           
           if (this.geminiFailCount >= this.maxGeminiFailures) {
             console.log('🔄 Limite de falhas Gemini atingido, tentando Claude...');
@@ -252,9 +314,32 @@ class SimpleChatServiceClass {
         conversation.title = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
       }
 
+      // Se é a primeira mensagem do usuário, adicionar ao histórico
+      if (isFirstUserMessage) {
+        conversations.unshift(conversation);
+        // Remover das conversas temporárias
+        this.temporaryConversations.delete(conversationId);
+        console.log('💾 Primeira mensagem do usuário - adicionando conversa ao histórico');
+      } else {
+        // Atualizar conversa existente no histórico
+        conversations[conversationIndex] = conversation;
+      }
+
       // Salvar todas as conversas
       await this.saveConversations(conversations);
-      console.log(`💾 Conversa salva com ${conversation.messages.length} mensagens (API: ${usedAPI ? 'SIM' : 'NÃO'})`);
+      // Determinar qual API foi usada para o log
+      let apiUsed = 'OFFLINE';
+      if (usedAPI) {
+        if (this.geminiFailCount === 0) {
+          apiUsed = 'GEMINI';
+        } else if (this.claudeFailCount < this.maxClaudeFailures) {
+          apiUsed = 'CLAUDE';
+        } else {
+          apiUsed = 'GPT';
+        }
+      }
+      
+      console.log(`💾 Conversa salva com ${conversation.messages.length} mensagens (API: ${apiUsed})`);
 
       return aiMsg;
 

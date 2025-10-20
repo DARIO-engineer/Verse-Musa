@@ -1,35 +1,10 @@
-// src/services/ExportService.ts
-import { Alert, Share, Platform } from 'react-native';
-import { Draft } from './DraftService';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-
-export interface ExportOptions {
-  format: 'txt' | 'pdf';
-  includeMetadata?: boolean;
-}
+// FUNCIONALIDADE DE EXPORTAÇÃO REMOVIDA
 
 export class ExportService {
-  /**
-   * Mostra opções de exportação para o usuário
-   */
-  static async showExportOptions(draft: Draft): Promise<void> {
-    Alert.alert(
-      '📤 Exportar Obra',
-      `Como deseja exportar "${draft.title}"?`,
-      [
-        {
-          text: '📄 Texto (.txt)',
-          onPress: () => this.exportWork(draft, { format: 'txt' })
-        },
-        {
-          text: '📋 PDF',
-          onPress: () => this.exportWork(draft, { format: 'pdf' })
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        }
+  static async showExportOptions(): Promise<void> {
+    // Funcionalidade removida
+  }
+}
       ]
     );
   }

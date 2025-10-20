@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../contexts/SettingsContext';
 import { getThemeColors, Colors, Spacing, BorderRadius, Shadows, Typography } from '../styles/DesignSystem';
 import { Card, Button } from '../components/UI';
-import { OfflineExportService } from '../services/OfflineExportService';
+// import { OfflineExportService } from '../services/OfflineExportService'; // REMOVIDO
 import * as DocumentPicker from 'expo-document-picker';
 
 const BackupScreen: React.FC = () => {
@@ -48,8 +48,8 @@ const BackupScreen: React.FC = () => {
   const loadStatistics = async () => {
     setLoading(true);
     try {
-      const stats = await OfflineExportService.getOfflineStatistics();
-      setStatistics(stats);
+      // Funcionalidade de estatísticas removida
+      setStatistics({ totalDrafts: 0, totalSize: 0 });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
     } finally {
@@ -58,29 +58,11 @@ const BackupScreen: React.FC = () => {
   };
 
   const handleFullBackup = async () => {
-    try {
-      setExporting(true);
-      await OfflineExportService.createFullBackup();
-    } catch (error) {
-      Alert.alert('Erro', 'Falha ao criar backup completo.');
-    } finally {
-      setExporting(false);
-    }
+    Alert.alert('Funcionalidade Removida', 'O backup foi removido desta versão do app.');
   };
 
   const handleExportAllDrafts = async (format: 'pdf' | 'txt' | 'json') => {
-    try {
-      setExporting(true);
-      await OfflineExportService.exportAllDrafts({ 
-        format, 
-        includeMetadata: true, 
-        includeImages: false 
-      });
-    } catch (error) {
-      Alert.alert('Erro', `Falha ao exportar em ${format.toUpperCase()}.`);
-    } finally {
-      setExporting(false);
-    }
+    Alert.alert('Funcionalidade Removida', 'A exportação foi removida desta versão do app.');
   };
 
   const handleRestoreBackup = async () => {
@@ -106,8 +88,7 @@ const BackupScreen: React.FC = () => {
               text: 'Restaurar', 
               style: 'destructive',
               onPress: async () => {
-                await OfflineExportService.restoreFromBackup(backupData);
-                await loadStatistics();
+                Alert.alert('Funcionalidade Removida', 'A restauração foi removida desta versão do app.');
               }
             }
           ]

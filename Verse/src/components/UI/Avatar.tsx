@@ -1,20 +1,16 @@
 import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text } from 'react-native';
 import { Colors, Typography } from '../../styles/DesignSystem';
 
 interface AvatarProps {
   name?: string;
-  photoUri?: string;
   size?: number;
-  showOnlyInitial?: boolean;
   style?: any;
 }
 
 const Avatar: React.FC<AvatarProps> = ({ 
   name = 'Poeta Anônimo', 
-  photoUri, 
   size = 40, 
-  showOnlyInitial = false,
   style = {} 
 }) => {
   // Função para extrair iniciais do primeiro e último nome
@@ -30,22 +26,6 @@ const Avatar: React.FC<AvatarProps> = ({
   };
   
   const initials = getInitials(name);
-  
-  if (!showOnlyInitial && photoUri) {
-    return (
-      <Image
-        source={{ uri: photoUri }}
-        style={[
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-          },
-          style,
-        ]}
-      />
-    );
-  }
   
   return (
     <View

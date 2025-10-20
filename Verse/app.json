@@ -1,20 +1,20 @@
 {
   "expo": {
-    "name": "Verse & Musa",
-    "slug": "VersoEMusa",
+    "name": "Verse",
+    "slug": "Verse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/musa.png",
+    "icon": "./assets/verse.png",
     "userInterfaceStyle": "light",
     "sdkVersion": "54.0.0",
     "splash": {
-      "image": "./assets/musa.png",
+      "image": "./assets/verse.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A237E"
     },
     "assetBundlePatterns": [
+      "assets/verse.png",
       "assets/musa.png",
-      "assets/logo.png",
       "assets/notification-icon.png",
       "assets/favicon.png"
     ],
@@ -23,13 +23,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/musa.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/verse.png",
+        "backgroundColor": "#1A237E"
       },
-      "package": "com.darpimen.VersoEMusa",
+      "package": "com.darpimen.Verse",
       "buildType": "apk",
       "gradleCommand": ":app:assembleRelease",
-      "enableAapt2": true
+      "enableAapt2": true,
+      "enableProguardInReleaseBuilds": true,
+      "enableSeparateBuildPerCPUArchitecture": true,
+      "universalApk": false
     },
     "web": {
       "favicon": "./assets/favicon.png"

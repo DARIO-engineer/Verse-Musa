@@ -332,7 +332,13 @@ const AboutScreen: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate('PoetryEducation' as never)}
+              onPress={() => {
+                try {
+                  (navigation as any).push('LiteraryGuide');
+                } catch (error) {
+                  console.log('Tela LiteraryGuide não registrada no navegador');
+                }
+              }}
               style={[
                 styles.advancedFeatureCard,
                 { backgroundColor: themeColors.surface, ...Shadows.md }
@@ -344,10 +350,10 @@ const AboutScreen: React.FC = () => {
                 end={{ x: 1, y: 1 }}
                 style={styles.advancedFeatureGradient}
               >
-                <Ionicons name="school" size={32} color={Colors.white} />
-                <Text style={styles.advancedFeatureTitle}>Educação Poética</Text>
+                <Ionicons name="library" size={32} color={Colors.white} />
+                <Text style={styles.advancedFeatureTitle}>Guia Literário</Text>
                 <Text style={styles.advancedFeatureDescription}>
-                  Aprenda formas, figuras e história da poesia
+                  Explore as formas de arte literária e suas técnicas
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

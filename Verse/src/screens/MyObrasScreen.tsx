@@ -21,9 +21,10 @@ import { useApp } from '../contexts/AppContext';
 import { Draft } from '../services/DraftService';
 import { NavigationHelper } from '../utils/NavigationHelper';
 import { CategoryService, Category } from '../services/CategoryService';
-import { ExportService } from '../services/ExportService';
+// import { ExportService } from '../services/ExportService'; // REMOVIDO
 import TypeNameDisplay from '../components/UI/TypeNameDisplay';
 import SimpleCache from '../utils/SimpleCache';
+import LiteraryGuideScreen from './LiteraryGuideScreen';
 
 
 const MyObrasScreen: React.FC = () => {
@@ -38,6 +39,7 @@ const MyObrasScreen: React.FC = () => {
   const [showMassSelectionModal, setShowMassSelectionModal] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
+  const [showLiteraryGuide, setShowLiteraryGuide] = useState(false);
   
   const navigation = useNavigation();
   const { drafts, loading, loadDrafts, deleteDraft, stats } = useApp();
@@ -274,8 +276,7 @@ const MyObrasScreen: React.FC = () => {
   };
 
   const handleBulkExport = () => {
-    // Implementar exportação múltipla (para implementação futura)
-    Alert.alert('Em Desenvolvimento', 'Funcionalidade de exportação múltipla será implementada em breve.');
+    Alert.alert('Funcionalidade Removida', 'A exportação foi removida desta versão do app.');
   };
 
   const handleCardPress = (draft: Draft) => {
@@ -326,7 +327,7 @@ const MyObrasScreen: React.FC = () => {
   const handleExportFromModal = () => {
     if (selectedDraft) {
       setShowOptionsModal(false);
-      ExportService.showExportOptions(selectedDraft);
+      Alert.alert('Funcionalidade Removida', 'A exportação foi removida desta versão do app.');
       setSelectedDraft(null);
     }
   };
@@ -367,13 +368,28 @@ const MyObrasScreen: React.FC = () => {
         }}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md }}>
-          <Text style={{
-            fontSize: Typography.fontSize['3xl'],
-            fontWeight: Typography.fontWeight.bold,
-            color: Colors.white,
-          }}>
-            {selectionMode ? `${selectedDrafts.size} Selecionada${selectedDrafts.size !== 1 ? 's' : ''}` : 'Minhas Obras'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <Text style={{
+              fontSize: Typography.fontSize['3xl'],
+              fontWeight: Typography.fontWeight.bold,
+              color: Colors.white,
+            }}>
+              {selectionMode ? `${selectedDrafts.size} Selecionada${selectedDrafts.size !== 1 ? 's' : ''}` : 'Minhas Obras'}
+            </Text>
+            {!selectionMode && (
+              <TouchableOpacity
+                onPress={() => setShowLiteraryGuide(true)}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  borderRadius: BorderRadius.full,
+                  padding: Spacing.xs,
+                  marginLeft: Spacing.sm,
+                }}
+              >
+                <Ionicons name="information-circle-outline" size={20} color={Colors.white} />
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {selectionMode ? (
               <>
@@ -422,17 +438,19 @@ const MyObrasScreen: React.FC = () => {
               </>
             ) : (
               <>
-                <TouchableOpacity
-                  onPress={toggleSelectionMode}
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    borderRadius: BorderRadius.full,
-                    padding: Spacing.sm,
-                    marginRight: Spacing.sm,
-                  }}
-                >
-                  <Ionicons name="checkmark-circle-outline" size={24} color={Colors.white} />
-                </TouchableOpacity>
+                {filteredDrafts.length > 0 && (
+                  <TouchableOpacity
+                    onPress={toggleSelectionMode}
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      borderRadius: BorderRadius.full,
+                      padding: Spacing.sm,
+                      marginRight: Spacing.sm,
+                    }}
+                  >
+                    <Ionicons name="checkmark-circle-outline" size={24} color={Colors.white} />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   onPress={() => navigation.navigate('CreateTab' as never)}
                   style={{
@@ -1153,23 +1171,6 @@ const MyObrasScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handleBulkExport}
-                style={{
-                  backgroundColor: themeColors.accent,
-                  borderRadius: BorderRadius.lg,
-                  padding: Spacing.md,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{
-                  fontSize: Typography.fontSize.sm,
-                  fontWeight: Typography.fontWeight.semibold,
-                  color: Colors.white,
-                }}>
-                  Exportar {selectedDrafts.size} Obra{selectedDrafts.size !== 1 ? 's' : ''}
-                </Text>
-              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => {
@@ -1282,26 +1283,6 @@ const MyObrasScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handleExportFromModal}
-                style={{
-                  backgroundColor: '#9B59B6',
-                  borderRadius: BorderRadius.lg,
-                  padding: Spacing.lg,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="share" size={24} color="white" style={{ marginRight: Spacing.sm }} />
-                <Text style={{
-                  fontSize: Typography.fontSize.lg,
-                  fontWeight: Typography.fontWeight.semibold,
-                  color: "white",
-                }}>
-                  Exportar
-                </Text>
-              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setShowOptionsModal(false)}
@@ -1380,29 +1361,6 @@ const MyObrasScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => {
-                  setShowActionModal(false);
-                  handleBulkExport();
-                }}
-                style={{
-                  backgroundColor: '#27AE60',
-                  borderRadius: BorderRadius.lg,
-                  padding: Spacing.lg,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="share" size={24} color="white" style={{ marginRight: Spacing.sm }} />
-                <Text style={{
-                  fontSize: Typography.fontSize.lg,
-                  fontWeight: Typography.fontWeight.semibold,
-                  color: "white",
-                }}>
-                  Exportar Selecionadas
-                </Text>
-              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => {
@@ -1449,6 +1407,16 @@ const MyObrasScreen: React.FC = () => {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Modal do Guia Literário */}
+      <Modal
+        visible={showLiteraryGuide}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowLiteraryGuide(false)}
+      >
+        <LiteraryGuideScreen onClose={() => setShowLiteraryGuide(false)} />
       </Modal>
     </SafeAreaView>
   );

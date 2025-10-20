@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import AppNavigatorOfflineFirst from './src/navigation/AppNavigatorOfflineFirst';
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import SplashScreen from './src/components/UI/SplashScreen';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -49,11 +50,7 @@ export default function App() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#4FC3F7" />
-      </View>
-    );
+    return <SplashScreen onFinish={() => setLoading(false)} />;
   }
 
   if (showOnboarding) {

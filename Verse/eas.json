@@ -28,11 +28,15 @@
         "gradleCommand": ":app:assembleRelease",
         "enableProguardInReleaseBuilds": true,
         "enableSeparateBuildPerCPUArchitecture": true,
-        "universalApk": false
+        "universalApk": false,
+        "enableHermes": true,
+        "enableShrinkResourcesInReleaseBuilds": true,
+        "enableMinifyInReleaseBuilds": true
       },
       "env": {
         "NODE_ENV": "production",
-        "EAS_SKIP_AUTO_FINGERPRINT": "1"
+        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "EXPO_OPTIMIZE_SIZE": "1"
       }
     },
     "production": {

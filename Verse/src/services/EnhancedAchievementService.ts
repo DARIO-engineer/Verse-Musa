@@ -676,7 +676,7 @@ export class EnhancedAchievementService {
 
   // Cache para evitar múltiplas verificações
   private static lastCheckTime = 0;
-  private static checkCooldown = 5000; // 5 segundos entre verificações
+  private static checkCooldown = 1000; // 1 segundo entre verificações (reduzido)
   private static cachedDrafts: any[] | null = null;
   private static cacheExpiry = 0;
 
@@ -694,17 +694,19 @@ export class EnhancedAchievementService {
         return;
       }
 
-      // Implementar cooldown para evitar verificações excessivas
+      // Implementar cooldown apenas para ações repetitivas
       const now = Date.now();
-      if (now - this.lastCheckTime < this.checkCooldown) {
-        return; // Skip se muito recente
-      }
-      this.lastCheckTime = now;
-
-      // Log reduzido
-      if (Math.random() < 0.1) { // Log apenas 10% das vezes
+      if (action === 'poem_created') {
+        // Para criação de poemas, sempre verificar (sem cooldown)
+        console.log('🏆 EnhancedAchievementService: Verificando conquistas para nova obra');
+      } else {
+        // Para outras ações, usar cooldown
+        if (now - this.lastCheckTime < this.checkCooldown) {
+          return; // Skip se muito recente
+        }
         console.log('🏆 EnhancedAchievementService: Verificando conquistas para', action);
       }
+      this.lastCheckTime = now;
 
       const achievements = this.getAllAchievements();
       const userProgress = await this.getAchievementProgress(userId);
@@ -757,8 +759,14 @@ export class EnhancedAchievementService {
             break;
         }
         
-        if (shouldCheck && this.checkAchievementRequirements(achievement, currentValue, data)) {
-          await this.unlockAchievement(userId, achievement);
+        if (shouldCheck) {
+          console.log(`🔍 Verificando conquista: ${achievement.title} - Progresso atual: ${currentValue}`);
+          if (this.checkAchievementRequirements(achievement, currentValue, data)) {
+            console.log(`🎉 Desbloqueando conquista: ${achievement.title}`);
+            await this.unlockAchievement(userId, achievement);
+          } else {
+            console.log(`❌ Requisitos não atendidos para: ${achievement.title}`);
+          }
         }
       }
 

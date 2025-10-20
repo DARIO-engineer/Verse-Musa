@@ -324,7 +324,7 @@ export const Shadows = {
   },
 };
 
-// Layout
+// Layout - Enhanced with responsive utilities
 export const Layout = {
   window: {
     width,
@@ -341,9 +341,25 @@ export const Layout = {
     xl: 1280,
   },
   
-  // Header heights
-  headerHeight: 60,
-  tabBarHeight: 80,
+  // Header heights - Responsive
+  headerHeight: width < 375 ? 50 : width >= 768 ? 70 : 60,
+  tabBarHeight: width < 375 ? 70 : width >= 768 ? 90 : 80,
+  
+  // Responsive breakpoints
+  breakpoints: {
+    xs: 320,
+    sm: 375,
+    md: 414,
+    lg: 768,
+    xl: 1024,
+    xxl: 1280,
+  },
+  
+  // Grid system
+  grid: {
+    columns: width > height ? (width >= 768 ? 3 : 2) : (width >= 768 ? 2 : 1),
+    gutter: width < 375 ? 12 : width >= 768 ? 20 : 16,
+  },
 };
 
 // Animation - Expandidas para mais opções

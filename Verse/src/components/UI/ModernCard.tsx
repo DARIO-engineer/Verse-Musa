@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ViewStyle, TextStyle, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../styles/DesignSystem';
 import { useSettings } from '../../contexts/SettingsContext';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { useResponsive, useResponsiveSpacing } from '../../hooks/useResponsive';
 
 interface ModernCardProps {
   title: string;
@@ -35,39 +34,36 @@ const ModernCard: React.FC<ModernCardProps> = ({
   const { activeTheme, getThemeColors } = useSettings();
   const isDark = activeTheme === 'dark';
   const themeColors = getThemeColors();
+  const responsive = useResponsive();
+  const { getSpacing, getFontSize } = useResponsiveSpacing();
   
   // Se useDarkCard for true ou estiver no dark mode, usar card escuro
   const shouldUseDarkCard = useDarkCard || isDark;
   
-  // Responsividade baseada no tamanho da tela
-  const isSmallScreen = screenWidth < 375;
-  const isMediumScreen = screenWidth >= 375 && screenWidth < 414;
-  const isLargeScreen = screenWidth >= 414;
-  
-  // Ajustar tamanhos baseado na tela
+  // Ajustar tamanhos baseado na tela usando hooks responsivos
   const getResponsiveSize = () => {
-    if (isSmallScreen) {
+    if (responsive.isSmallDevice) {
       return {
         iconSize: 18,
-        titleFontSize: Typography.fontSize.lg,
-        captionFontSize: Typography.fontSize.xs,
-        padding: Spacing.sm,
+        titleFontSize: getFontSize(Typography.fontSize.lg),
+        captionFontSize: getFontSize(Typography.fontSize.xs),
+        padding: getSpacing(Spacing.sm),
         minHeight: 85,
       };
-    } else if (isMediumScreen) {
+    } else if (responsive.isMediumDevice) {
       return {
         iconSize: 20,
-        titleFontSize: Typography.fontSize.xl,
-        captionFontSize: Typography.fontSize.xs,
-        padding: Spacing.base,
+        titleFontSize: getFontSize(Typography.fontSize.xl),
+        captionFontSize: getFontSize(Typography.fontSize.xs),
+        padding: getSpacing(Spacing.base),
         minHeight: 90,
       };
     } else {
       return {
         iconSize: 22,
-        titleFontSize: Typography.fontSize['2xl'],
-        captionFontSize: Typography.fontSize.sm,
-        padding: Spacing.lg,
+        titleFontSize: getFontSize(Typography.fontSize['2xl']),
+        captionFontSize: getFontSize(Typography.fontSize.sm),
+        padding: getSpacing(Spacing.lg),
         minHeight: 100,
       };
     }
@@ -93,7 +89,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
   const captionStyle: TextStyle = {
     fontSize: responsiveSize.captionFontSize,
     color: shouldUseDarkCard ? themeColors.textSecondary : 'rgba(255,255,255,0.8)',
-    marginBottom: isSmallScreen ? Spacing.xs / 2 : Spacing.xs,
+    marginBottom: responsive.isSmallDevice ? getSpacing(Spacing.xs / 2) : getSpacing(Spacing.xs),
     lineHeight: responsiveSize.captionFontSize * 1.2,
   };
 
@@ -101,7 +97,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
     fontSize: responsiveSize.titleFontSize,
     fontWeight: Typography.fontWeight.bold,
     color: shouldUseDarkCard ? themeColors.textPrimary : Colors.white,
-    marginBottom: isSmallScreen ? Spacing.xs / 2 : Spacing.xs,
+    marginBottom: responsive.isSmallDevice ? getSpacing(Spacing.xs / 2) : getSpacing(Spacing.xs),
     flexShrink: 1,
     lineHeight: responsiveSize.titleFontSize * 1.1,
   };
@@ -122,7 +118,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
         {shouldUseDarkCard ? (
           <View style={{
             backgroundColor: themeColors.surface,
-            borderLeftWidth: isSmallScreen ? 3 : 4,
+            borderLeftWidth: responsive.isSmallDevice ? 3 : 4,
             borderLeftColor: themeColors.primary,
             padding: responsiveSize.padding,
             borderRadius: BorderRadius.lg,
@@ -136,7 +132,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={captionStyle} numberOfLines={1}>{title}</Text>
-                <Text style={titleStyle} numberOfLines={isSmallScreen ? 1 : 2}>{value}</Text>
+                <Text style={titleStyle} numberOfLines={responsive.isSmallDevice ? 1 : 2}>{value}</Text>
                 {subtitle && <Text style={subtitleStyle}>{subtitle}</Text>}
               </View>
               <View style={{

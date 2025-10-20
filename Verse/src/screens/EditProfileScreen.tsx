@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Image,
   Alert,
   StyleSheet,
 } from 'react-native';
@@ -106,50 +105,6 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handlePhotoAction = () => {
-    const options: any[] = [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Câmera', onPress: takePhoto },
-      { text: 'Galeria', onPress: selectPhoto },
-    ];
-
-    if (profile?.photoUri) {
-      options.push({ 
-        text: 'Remover Foto', 
-        onPress: removePhoto, 
-        style: 'destructive'
-      });
-    }
-
-    Alert.alert(
-      'Foto do Perfil',
-      profile?.photoUri 
-        ? 'Você já tem uma foto. O que deseja fazer?' 
-        : 'Adicionar foto do perfil:',
-      options
-    );
-  };
-
-  const takePhoto = async () => {
-    const photoUri = await EnhancedProfileService.takeProfilePhoto();
-    if (photoUri) {
-      await loadProfile(); // Recarregar perfil completo
-    }
-  };
-
-  const selectPhoto = async () => {
-    const photoUri = await EnhancedProfileService.selectProfilePhoto();
-    if (photoUri) {
-      await loadProfile(); // Recarregar perfil completo
-    }
-  };
-
-  const removePhoto = async () => {
-    const success = await EnhancedProfileService.removeProfilePhoto();
-    if (success) {
-      await loadProfile(); // Recarregar perfil completo
-    }
-  };
 
   if (loading) {
     return (
@@ -184,35 +139,6 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Seção Foto */}
-        <View style={[styles.section, { backgroundColor: isDark ? '#2a2a2a' : '#ffffff' }]}>
-          <Text style={[styles.sectionHeader, { color: isDark ? '#ffffff' : '#000000' }]}>
-            📸 Foto do Perfil
-          </Text>
-          <View style={styles.photoContainer}>
-            <TouchableOpacity onPress={handlePhotoAction} style={styles.photoWrapper}>
-              {profile?.photoUri ? (
-                <Image source={{ uri: profile.photoUri }} style={styles.profilePhoto} />
-              ) : (
-                <View style={[styles.photoPlaceholder, { backgroundColor: Colors.primary }]}>
-                  <Text style={styles.initialText}>
-                    {(formData.name || profile?.name || 'U').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.photoEditIcon}>
-                <Ionicons name="camera" size={16} color="#ffffff" />
-              </View>
-            </TouchableOpacity>
-            <Text style={[styles.photoHint, { color: isDark ? '#cccccc' : '#666666' }]}>
-              {profile?.photoUri 
-                ? 'Toque para alterar ou remover foto' 
-                : formData.name 
-                  ? `Toque para adicionar foto de ${formData.name}` 
-                  : 'Toque para adicionar foto'}
-            </Text>
-          </View>
-        </View>
 
         {/* Seção Informações */}
         <View style={[styles.section, { backgroundColor: isDark ? '#2a2a2a' : '#ffffff' }]}>

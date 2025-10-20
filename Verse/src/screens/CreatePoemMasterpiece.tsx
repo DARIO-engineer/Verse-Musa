@@ -30,7 +30,7 @@ import { DraftService } from '../services/DraftService';
 import { NavigationHelper } from '../utils/NavigationHelper';
 import { CategoryService, Category } from '../services/CategoryService';
 import { UserTemplateService, UserTemplate } from '../services/UserTemplateService';
-import { PDFService } from '../services/PDFService';
+// import { PDFService } from '../services/PDFService'; // REMOVIDO
 import SimpleCache from '../utils/SimpleCache';
 import CreateCategoryModal from '../components/CreateCategoryModal';
 import CreateTemplateModal from '../components/CreateTemplateModal';
@@ -545,27 +545,8 @@ const CreatePoemMasterpiece: React.FC = () => {
       return;
     }
 
-    try {
-      const stats = PDFService.getPoemStats(content);
-      const selectedCategory = getSelectedType();
-      const categoryName = selectedCategory?.name || 'Poesia';
-      
-      
-      const poemData = {
-        title: title.trim() || 'Poema sem título',
-        content: content.trim(),
-        author: profile?.name || 'Poeta',
-        date: new Date().toISOString(),
-        wordCount: stats.wordCount,
-        verseCount: stats.verseCount,
-        category: categoryName,
-      };
-
-      await PDFService.generatePoemPDF(poemData, { share });
-    } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
-      Alert.alert('Erro', 'Não foi possível exportar o PDF. Tente novamente.');
-    }
+    // Funcionalidade de exportação PDF foi removida
+    Alert.alert('Aviso', 'Funcionalidade de exportação foi removida desta versão.');
   };
 
   // Função para mapear nome do template para ID do tipo
@@ -914,17 +895,6 @@ const CreatePoemMasterpiece: React.FC = () => {
                 <Ionicons name="add" size={20} color={themeColors.white} />
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={() => handleExportPDF()}
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                borderRadius: BorderRadius.lg,
-                paddingHorizontal: Spacing.sm,
-                paddingVertical: Spacing.sm,
-              }}
-            >
-              <Ionicons name="document-text-outline" size={20} color={themeColors.white} />
-            </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
               style={{
@@ -1781,31 +1751,6 @@ const CreatePoemMasterpiece: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            onPress={() => setShowInspiration(true)}
-            style={[
-              styles.toolButton,
-              { backgroundColor: themeColors.surface },
-            ]}
-          >
-            <Ionicons name="bulb" size={20} color={themeColors.primary} />
-            <Text style={[styles.toolButtonText, { color: themeColors.textPrimary }]}>
-              Inspiração
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setShowResourceLibrary(true)}
-            style={[
-              styles.toolButton,
-              { backgroundColor: themeColors.surface },
-            ]}
-          >
-            <Ionicons name="library" size={20} color={themeColors.primary} />
-            <Text style={[styles.toolButtonText, { color: themeColors.textPrimary }]}>
-              Recursos
-            </Text>
-          </TouchableOpacity>
 
           {/* Abas de Inspiração */}
           <View style={{

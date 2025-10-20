@@ -12,6 +12,8 @@ export { default as AnimatedContainer } from './AnimatedContainer';
 export { default as StatsCard } from './StatsCard';
 export { default as Avatar } from './Avatar';
 export { ActionSheet } from './ActionSheet';
+export { default as ResponsiveContainer } from './ResponsiveContainer';
+export { default as ResponsiveGrid } from './ResponsiveGrid';
 
 export type { ButtonVariant, ButtonSize } from './Button';
 export type { CardVariant } from './Card';

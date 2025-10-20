@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../styles/DesignSystem';
 import { useSettings } from '../contexts/SettingsContext';
+import { useResponsive } from '../hooks/useResponsive';
 import ModernCard from '../components/UI/ModernCard';
 import { Avatar } from '../components/UI';
 import AchievementCelebrationModal from '../components/AchievementCelebrationModal';
@@ -77,6 +78,7 @@ interface QuickAction {
 const HomeScreenMasterpiece: React.FC = () => {
   const { drafts, profile, loading, stats, refreshData } = useApp();
   const { activeTheme, getThemeColors } = useSettings();
+  const responsive = useResponsive();
   const isDark = activeTheme === 'dark';
   const themeColors = getThemeColors();
   const [refreshing, setRefreshing] = useState(false);
@@ -88,13 +90,13 @@ const HomeScreenMasterpiece: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      title: '✏️ Criar Poema',
+      title: '✏️ Criar Obra',
       icon: 'create-outline',
       gradient: Array.isArray(themeColors.gradientPrimary) ? themeColors.gradientPrimary : Colors.gradientPrimary,
       onPress: () => navigation.navigate('CreateTab' as never),
     },
     {
-      title: '📚 Meus Rascunhos',
+      title: '📚 Obras',
       icon: 'documents-outline',
       gradient: Array.isArray(themeColors.gradientSecondary) ? themeColors.gradientSecondary : Colors.gradientSecondary,
       onPress: () => navigation.navigate('ObrasTab' as never),
@@ -171,6 +173,35 @@ const HomeScreenMasterpiece: React.FC = () => {
     return 'Boa noite';
   };
 
+  const cardLayoutStyle = useMemo(() => {
+    const numCards = quickActions.length;
+    
+    if (responsive.isTablet) {
+      // Em tablets, sempre em linha única
+      return {
+        cardWidth: numCards === 2 ? '48%' : numCards === 3 ? '30%' : '48%',
+        justifyContent: numCards === 3 ? 'space-around' : 'space-between',
+        flexWrap: 'nowrap'
+      };
+    } else {
+      // Em dispositivos móveis
+      if (numCards <= 2) {
+        return {
+          cardWidth: '48%',
+          justifyContent: 'space-between',
+          flexWrap: 'nowrap'
+        };
+      } else {
+        // Para 3+ cards: layout responsivo com wrap
+        return {
+          cardWidth: '48%',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap'
+        };
+      }
+    }
+  }, [quickActions.length, responsive.isTablet]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
@@ -234,9 +265,7 @@ const HomeScreenMasterpiece: React.FC = () => {
             >
               <Avatar 
                 name={profile?.name} 
-                photoUri={profile?.photoUri}
                 size={32}
-                showOnlyInitial={true}
               />
             </TouchableOpacity>
           </View>
@@ -253,13 +282,13 @@ const HomeScreenMasterpiece: React.FC = () => {
             Suas Estatísticas
           </Text>
 
+          {/* Primeira linha - 2 cards principais */}
           <View style={{ 
             flexDirection: 'row', 
-            flexWrap: 'wrap', 
             justifyContent: 'space-between',
-            marginBottom: Spacing.xl,
+            marginBottom: Spacing.lg,
           }}>
-            <View style={{ width: '48%', marginBottom: Spacing.md }}>
+            <View style={{ width: '48%' }}>
               <ModernCard
                 title="Total de Obras"
                 value={stats.totalPoems}
@@ -269,7 +298,7 @@ const HomeScreenMasterpiece: React.FC = () => {
                 trendValue={stats.totalPoems > 0 ? `${stats.totalPoems}` : "0"}
               />
             </View>
-            <View style={{ width: '48%', marginBottom: Spacing.md }}>
+            <View style={{ width: '48%' }}>
               <ModernCard
                 title="Sequência Atual"
                 value={
@@ -287,7 +316,15 @@ const HomeScreenMasterpiece: React.FC = () => {
                 }
               />
             </View>
-            <View style={{ width: '48%', marginBottom: Spacing.md }}>
+          </View>
+
+          {/* Segunda linha - 2 cards secundários */}
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-between',
+            marginBottom: Spacing.xl,
+          }}>
+            <View style={{ width: '48%' }}>
               <ModernCard
                 title="Palavras Escritas"
                 value={stats.totalWords?.toLocaleString() || '0'}
@@ -303,7 +340,7 @@ const HomeScreenMasterpiece: React.FC = () => {
                 }
               />
             </View>
-            <View style={{ width: '48%', marginBottom: Spacing.md }}>
+            <View style={{ width: '48%' }}>
               <ModernCard
                 title="Categorias"
                 value={stats.categoriesExplored}
@@ -332,8 +369,8 @@ const HomeScreenMasterpiece: React.FC = () => {
 
           <View style={{ 
             flexDirection: 'row', 
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
+            flexWrap: cardLayoutStyle.flexWrap as any,
+            justifyContent: cardLayoutStyle.justifyContent as any,
             marginBottom: Spacing.xl,
           }}>
             {quickActions.map((action, index) => (              <TouchableOpacity
@@ -341,7 +378,7 @@ const HomeScreenMasterpiece: React.FC = () => {
                 onPress={action.onPress}
                 activeOpacity={0.7}
                 style={{
-                  width: '48%',
+                  width: cardLayoutStyle.cardWidth as any,
                   marginBottom: Spacing.md,
                 }}
               >
