@@ -70,29 +70,13 @@ const AboutScreen: React.FC = () => {
     },
   ];
 
-  const testimonials = [
-    {
-      text: '"O Verso&Musa transformou minha relação com a poesia. Agora escrevo todos os dias!"',
-      author: 'Ana Silva',
-      role: 'Poeta Amadora',
-    },
-    {
-      text: '"A IA Musa é incrível! Me ajuda a superar o bloqueio criativo e encontrar as palavras certas."',
-      author: 'Carlos Mendes',
-      role: 'Escritor',
-    },
-    {
-      text: '"Interface linda e funcionalidades completas. É o app de poesia que eu sempre sonhei."',
-      author: 'Mariana Costa',
-      role: 'Professora de Literatura',
-    },
-  ];
-
-  const handleContact = (type: 'email' | 'feedback') => {
+  const handleContact = (type: 'email' | 'whatsapp' | 'feedback') => {
     if (type === 'email') {
-      Linking.openURL('mailto:marvinsfglucas@gmail.com');
+      Linking.openURL('mailto:deurickpimetel18@gmail.com');
+    } else if (type === 'whatsapp') {
+      Linking.openURL('https://wa.me/244944396411?text=Olá! Entrei em contato através do app Verse&Musa.');
     } else {
-      Linking.openURL('mailto:marvinsfglucas@gmail.com?subject=Feedback do App Verse&body=Olá! Gostaria de enviar um feedback sobre o app Verse:');
+      Linking.openURL('mailto:deurickpimetel18@gmail.com?subject=Feedback do App Verse&body=Olá! Gostaria de enviar um feedback sobre o app Verse:');
     }
   };
 
@@ -225,34 +209,6 @@ const AboutScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Testimonials */}
-        <View style={styles.section}>
-          <Text style={[CommonStyles.heading3, { color: themeColors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' }]}>
-            O que dizem nossos usuários
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.testimonialsContainer}
-          >
-            {testimonials.map((testimonial, index) => (
-              <View key={index} style={[styles.testimonialCard, { backgroundColor: themeColors.surface, ...Shadows.md }]}>
-                <Text style={[CommonStyles.quote, { color: themeColors.textPrimary, marginBottom: Spacing.md }]}>
-                  {testimonial.text}
-                </Text>
-                <View style={styles.testimonialAuthor}>
-                  <Text style={[CommonStyles.body, { color: themeColors.textPrimary, fontWeight: '600' }]}>
-                    {testimonial.author}
-                  </Text>
-                  <Text style={[CommonStyles.caption, { color: themeColors.textSecondary }]}>
-                    {testimonial.role}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
         {/* Developer Section */}
         <View style={styles.section}>
           <Text style={[CommonStyles.heading3, { color: themeColors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' }]}>
@@ -280,19 +236,19 @@ const AboutScreen: React.FC = () => {
                   onPress={() => handleContact('email')}
                   style={[styles.socialButton, { backgroundColor: themeColors.primary }]}
                 >
-                  <Ionicons name="information-circle-outline" size={20} color={Colors.white} />
+                  <Ionicons name="mail-outline" size={20} color={Colors.white} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleContact('whatsapp')}
+                  style={[styles.socialButton, { backgroundColor: '#25D366' }]}
+                >
+                  <Ionicons name="logo-whatsapp" size={20} color={Colors.white} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleContact('feedback')}
                   style={[styles.socialButton, { backgroundColor: themeColors.secondary }]}
                 >
                   <Ionicons name="chatbubble-outline" size={20} color={Colors.white} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleContact('feedback')}
-                  style={[styles.socialButton, { backgroundColor: themeColors.accent }]}
-                >
-                  <Ionicons name="mail-outline" size={20} color={Colors.white} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -333,11 +289,11 @@ const AboutScreen: React.FC = () => {
 
             <TouchableOpacity
               onPress={() => {
-                try {
-                  (navigation as any).push('LiteraryGuide');
-                } catch (error) {
-                  console.log('Tela LiteraryGuide não registrada no navegador');
-                }
+                Alert.alert(
+                  'Guia Literário',
+                  'Funcionalidade em desenvolvimento! Em breve você terá acesso a um guia completo de formas poéticas e técnicas literárias.',
+                  [{ text: 'OK' }]
+                );
               }}
               style={[
                 styles.advancedFeatureCard,
@@ -485,20 +441,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     color: Colors.white,
     textAlign: 'center',
-  },
-  testimonialsContainer: {
-    paddingHorizontal: Spacing.lg,
-  },
-  testimonialCard: {
-    width: width * 0.8,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginRight: Spacing.md,
-  },
-  testimonialAuthor: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.md,
   },
   developerCard: {
     flexDirection: 'row',

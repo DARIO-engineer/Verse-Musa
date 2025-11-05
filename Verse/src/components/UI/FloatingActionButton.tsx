@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, BorderRadius, Spacing, Typography, Shadows } from '../../styles/DesignSystem';
 
@@ -20,6 +20,58 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   style,
   disabled = false,
 }) => {
+  const [pressed, setPressed] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Animação de entrada
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Animação ao pressionar
+  useEffect(() => {
+    if (pressed) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0.9,
+          tension: 300,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 300,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [pressed]);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
+
   const getBackgroundColor = () => {
     if (disabled) return Colors.gray400;
     
@@ -60,26 +112,42 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   const buttonSize = getSize();
 
   return (
-    <TouchableOpacity
+    <Animated.View
       style={[
-        styles.container,
         {
-          width: buttonSize,
-          height: buttonSize,
-          backgroundColor: getBackgroundColor(),
+          transform: [{ scale: scaleAnim }],
         },
-        style,
       ]}
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={disabled}
     >
-      <Ionicons
-        name={icon}
-        size={getIconSize()}
-        color={Colors.white}
-      />
-    </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.container,
+          {
+            width: buttonSize,
+            height: buttonSize,
+            backgroundColor: getBackgroundColor(),
+          },
+          style,
+        ]}
+        onPress={onPress}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        activeOpacity={0.9}
+        disabled={disabled}
+      >
+        <Animated.View
+          style={{
+            transform: [{ rotate: spin }],
+          }}
+        >
+          <Ionicons
+            name={icon}
+            size={getIconSize()}
+            color={Colors.white}
+          />
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

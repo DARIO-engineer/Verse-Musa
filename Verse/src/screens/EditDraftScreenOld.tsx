@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
@@ -11,7 +12,6 @@ import {
   Platform,
   Modal,
   StatusBar,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,25 +29,16 @@ import { CategoryService } from '../services/CategoryService';
 import { UserTemplateService } from '../services/UserTemplateService';
 import { EnhancedAchievementService } from '../services/EnhancedAchievementService';
 import SimpleCache from '../utils/SimpleCache';
-import { POEM_TEMPLATES, TEXTUAL_INSPIRATIONS, POWERFUL_THEMES } from '../constants/poemTemplates';
+import { POEM_TEMPLATES, TEXTUAL_INSPIRATIONS, POWERFUL_THEMES, INSPIRATION_CATEGORIES } from '../constants/poemTemplates';
 import CreateCategoryModal from '../components/CreateCategoryModal';
 import CreateTemplateModal from '../components/CreateTemplateModal';
 import { NavigationHelper } from '../utils/NavigationHelper';
-import ModernCard from '../components/UI/ModernCard';
 
-const { width } = Dimensions.get('window');
-
-// Funções auxiliares para formatação de data
+// Small local date helpers (used in other screens as well)
 const formatDateTime = (date: string | Date) => {
   try {
     const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return d.toLocaleString();
   } catch (e) {
     return String(date);
   }
@@ -57,76 +48,76 @@ const formatDateInfo = (createdAt: string | Date, updatedAt: string | Date) => {
   try {
     const created = new Date(createdAt);
     const updated = new Date(updatedAt);
-    const diffInMinutes = (updated.getTime() - created.getTime()) / (1000 * 60);
-    
-    if (diffInMinutes < 1) {
-      return `Criado ${formatDateTime(created)}`;
-    } else {
-      return `Modificado ${formatDateTime(updated)}`;
-    }
+    if (created.getTime() === updated.getTime()) return `Criado em ${formatDateTime(created)}`;
+    return `Criado em ${formatDateTime(created)}\nÚltima modificação: ${formatDateTime(updated)}`;
   } catch (e) {
-    return 'Data indisponível';
+    return '';
   }
 };
 
+
+
 type EditDraftScreenRouteProp = RouteProp<{ params: { draftId?: string; draft?: any; originScreen?: 'Home' | 'Obras' | 'Profile' } }, 'params'>;
 
-const EditDraftScreenNew: React.FC = () => {
+const EditDraftScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<EditDraftScreenRouteProp>();
-  const { activeTheme, getThemeColors } = useSettings();
+  const { activeTheme, settings } = useSettings();
   const { refreshDrafts, updateDraftOptimistic } = useDrafts();
-  const themeColors = getThemeColors();
   const isDark = activeTheme === 'dark';
   
   const { draftId, draft: serializedDraft, originScreen } = route.params;
   
-  // Estados principais
   const [draft, setDraft] = useState<Draft | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [theme, setTheme] = useState(''); // Campo separado para tema
   const [selectedTypeId, setSelectedTypeId] = useState<string>('poesia');
   const [availableTypes, setAvailableTypes] = useState<Category[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<PoemTemplate | null>(null);
-  const [selectedUserTemplate, setSelectedUserTemplate] = useState<UserTemplate | null>(null);
-  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
-  
-  // Estados de UI
-  const [loading, setLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showInspiration, setShowInspiration] = useState(false);
+  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
+  const [selectedUserTemplate, setSelectedUserTemplate] = useState<UserTemplate | null>(null);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+  const [showInspiration, setShowInspiration] = useState(false);
   const [activeInspirationTab, setActiveInspirationTab] = useState<'textual' | 'themes'>('textual');
+  const [wordCount, setWordCount] = useState(0);
+  const [verseCount, setVerseCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   
-  // Estados para controle de mudanças
+  // Estados para controle de mudanças não salvas
   const [originalTitle, setOriginalTitle] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [originalTypeId, setOriginalTypeId] = useState('poesia');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [isSavingBlocked, setIsSavingBlocked] = useState(false); // Flag para bloquear salvamento
   
-  // Estatísticas
-  const [wordCount, setWordCount] = useState(0);
-  const [verseCount, setVerseCount] = useState(0);
-  
-  // Refs e animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const borderPulseAnim = useRef(new Animated.Value(0)).current;
-  const toastOpacityAnim = useRef(new Animated.Value(0)).current;
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isNavigatingRef = useRef(false);
+  const toastOpacityAnim = useRef(new Animated.Value(0)).current;
+  const isNavigatingRef = useRef(false); // Flag para prevenir múltiplas navegações
+
+  const themeColors = {
+    background: isDark ? '#1a1a1a' : '#ffffff',
+    surface: isDark ? '#2a2a2a' : '#f8f9fa',
+    textPrimary: isDark ? '#ffffff' : '#1a1a1a',
+    textSecondary: isDark ? '#cccccc' : '#666666',
+    border: isDark ? '#404040' : '#e0e0e0',
+  };
 
   // Animações de entrada
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -144,6 +135,7 @@ const EditDraftScreenNew: React.FC = () => {
       setLoading(true);
       
       const id = draftId || serializedDraft?.id;
+
       if (!id) {
         Alert.alert('Erro', 'ID do rascunho não encontrado.');
         navigation.goBack();
@@ -156,33 +148,48 @@ const EditDraftScreenNew: React.FC = () => {
         setDraft(draftData);
         setTitle(draftData.title);
         setContent(draftData.content);
+        
+        // Armazenar valores originais para detectar mudanças
         setOriginalTitle(draftData.title);
         setOriginalContent(draftData.content);
         
-        // Configurar tipo/categoria
+        // Priorizar typeId se disponível, senão usar categoria legacy
         if (draftData.typeId) {
           setSelectedTypeId(draftData.typeId);
           setOriginalTypeId(draftData.typeId);
         } else {
+          // Converter categoria antiga para ID do tipo (compatibilidade)
           const mappedTypeId = CategoryService.mapLegacyCategory(draftData.category);
           setSelectedTypeId(mappedTypeId);
           setOriginalTypeId(mappedTypeId);
         }
 
-        // Carregar templates se disponíveis
+        // Carregar template usado se disponível
         if (draftData.templateId) {
           const template = POEM_TEMPLATES.find(t => t.id === draftData.templateId);
-          if (template) setSelectedTemplate(template);
+          if (template) {
+            setSelectedTemplate(template);
+            console.log('📋 Template padrão carregado:', template.name);
+          }
         }
 
         if (draftData.userTemplateId) {
           try {
             const userTemplates = await UserTemplateService.getAllTemplates();
             const userTemplate = userTemplates.find(t => t.id === draftData.userTemplateId);
-            if (userTemplate) setSelectedUserTemplate(userTemplate);
+            if (userTemplate) {
+              setSelectedUserTemplate(userTemplate);
+              console.log('📋 Template do usuário carregado:', userTemplate.name);
+            }
           } catch (error) {
             console.error('Erro ao carregar template do usuário:', error);
           }
+        }
+
+        // Carregar tema se disponível
+        if (draftData.theme) {
+          setTheme(draftData.theme);
+          console.log('🎨 Tema carregado:', draftData.theme);
         }
       } else {
         Alert.alert('Erro', 'Rascunho não encontrado');
@@ -195,14 +202,20 @@ const EditDraftScreenNew: React.FC = () => {
     fetchDraft();
   }, [draftId, serializedDraft]);
 
-  // Carregar tipos de obra
+  // Função para carregar tipos de obra
   const loadPoemTypes = async () => {
     try {
+      console.log('🔄 EditDraftScreen - Carregando tipos de obra...');
+
+      // Carregar todas as categorias (padrão + personalizadas)
       const allCategories = await CategoryService.getAllCategories();
+      console.log('📋 EditDraftScreen - Categorias carregadas:', allCategories.length);
+      console.log('📝 EditDraftScreen - Categorias:', allCategories.map(c => `${c.name} (${c.id})`));
+
       setAvailableTypes(allCategories);
     } catch (error) {
-      console.error('Erro ao carregar tipos de obra:', error);
-      // Fallback para categorias padrão
+      console.error('❌ EditDraftScreen - Erro ao carregar tipos de obra:', error);
+      // Fallback: usar categorias padrão
       const defaultCategories = [
         {
           id: 'poesia',
@@ -235,19 +248,42 @@ const EditDraftScreenNew: React.FC = () => {
           updatedAt: new Date().toISOString(),
         },
       ];
+      console.log('🔄 EditDraftScreen - Usando categorias padrão:', defaultCategories.length);
       setAvailableTypes(defaultCategories);
     }
   };
 
+  // Carregar tipos de obra disponíveis
   useEffect(() => {
     loadPoemTypes();
   }, []);
 
+  // Recarregar tipos quando a tela ganhar foco
   useFocusEffect(
     useCallback(() => {
+      console.log('🔄 EditDraftScreen - Tela ganhou foco, recarregando tipos...');
       loadPoemTypes();
     }, [])
   );
+
+  // Função para recarregar tipos manualmente
+  const reloadTypes = async () => {
+    console.log('🔄 Recarregando tipos manualmente...');
+    await loadPoemTypes();
+  };
+
+  // Função para obter categoria no formato antigo (para compatibilidade)
+  const getLegacyCategory = (): 'Poesia' | 'Jogral' | 'Soneto' => {
+    const selectedType = availableTypes.find(type => type.id === selectedTypeId);
+    if (selectedType?.name === 'Jogral') return 'Jogral';
+    if (selectedType?.name === 'Soneto') return 'Soneto';
+    return 'Poesia';
+  };
+
+  // Função para obter o tipo selecionado
+  const getSelectedType = (): Category | null => {
+    return availableTypes.find(type => type.id === selectedTypeId) || null;
+  };
 
   // Detectar mudanças não salvas
   useEffect(() => {
@@ -258,13 +294,23 @@ const EditDraftScreenNew: React.FC = () => {
     setHasUnsavedChanges(titleChanged || contentChanged || typeChanged);
   }, [title, content, selectedTypeId, originalTitle, originalContent, originalTypeId]);
 
-  // Interceptar navegação para mudanças não salvas
+  // Interceptar navegação para mostrar aviso de mudanças não salvas
   useFocusEffect(
     React.useCallback(() => {
       const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-        if (!hasUnsavedChanges) return;
+        console.log('🚧 beforeRemove interceptado, hasUnsavedChanges:', hasUnsavedChanges);
         
+        if (!hasUnsavedChanges) {
+          // Se não há mudanças, permitir navegação
+          console.log('✅ Navegação permitida - sem mudanças');
+          return;
+        }
+
+        // Prevenir navegação padrão
         e.preventDefault();
+        console.log('⚠️ Navegação bloqueada - mostrando modal');
+
+        // Mostrar modal de confirmação
         setShowUnsavedModal(true);
       });
 
@@ -280,51 +326,83 @@ const EditDraftScreenNew: React.FC = () => {
     setVerseCount(verses.length);
   }, [content]);
 
-  // Auto-save inteligente
+  // Auto-save com debounce (sem toast e menos frequente)
   useEffect(() => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    if ((title.trim() || content.trim()) && hasUnsavedChanges && !showUnsavedModal) {
+    // Só faz auto-save se estiver habilitado nas configurações E tiver conteúdo, mudanças E o salvamento não estiver bloqueado
+    if (settings.autoSaveEnabled && (title.trim() || content.trim()) && hasUnsavedChanges && !showUnsavedModal && !isSavingBlocked) {
       autoSaveTimeoutRef.current = setTimeout(() => {
-        handleSave(false, false); // Auto-save silencioso
+        console.log('🔄 Auto-salvando rascunho...');
+        handleSave(false, false); // Auto-save sem toast
         setIsAutoSaving(true);
-        setTimeout(() => setIsAutoSaving(false), 1500);
-      }, 3000);
+        setTimeout(() => setIsAutoSaving(false), 1000); // Mostra indicador por 1 segundo
+      }, 5000); // Aumentado para 5 segundos
+    } else if (!settings.autoSaveEnabled && hasUnsavedChanges) {
+      console.log('⚠️ Auto-save desabilitado nas configurações');
     }
-  }, [title, content, hasUnsavedChanges, showUnsavedModal]);
+  }, [title, content, hasUnsavedChanges, showUnsavedModal, isSavingBlocked, settings.autoSaveEnabled]);
 
-  // Funções auxiliares
-  const getLegacyCategory = (): 'Poesia' | 'Jogral' | 'Soneto' => {
-    const selectedType = availableTypes.find(type => type.id === selectedTypeId);
-    if (selectedType?.name === 'Jogral') return 'Jogral';
-    if (selectedType?.name === 'Soneto') return 'Soneto';
-    return 'Poesia';
-  };
+  // Carregar templates do usuário quando o modal de templates é aberto
+  useEffect(() => {
+    if (showTemplates) {
+      console.log('📖 EditDraft: Modal de templates aberto, carregando templates...');
+      loadUserTemplates();
+    }
+  }, [showTemplates]);
 
-  const getSelectedType = (): Category | null => {
-    return availableTypes.find(type => type.id === selectedTypeId) || null;
-  };
+  // Cleanup quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // Parar animação de borda se estiver rodando
+      borderPulseAnim.stopAnimation();
+    };
+  }, []);
 
-  // Handlers principais
   const handleGoBack = () => {
-    if (isNavigatingRef.current) return;
+    // Prevenir múltiplas chamadas
+    if (isNavigatingRef.current) {
+      console.log('🚫 Navegação já em andamento, ignorando...');
+      return;
+    }
     
+    console.log(`🔙 Saindo da edição, origem: ${originScreen}`);
     isNavigatingRef.current = true;
+    
+    // Garantir que não há mudanças não salvas primeiro
     setHasUnsavedChanges(false);
     
+    // Usar setTimeout para garantir que o estado seja atualizado
     setTimeout(() => {
       if (originScreen === 'Obras') {
         try {
+          console.log('🔄 Tentando navegação goBack() primeiro...');
+          // Primeiro tentar um simples goBack()
           navigation.goBack();
+          console.log('✅ Navegação goBack() executada');
         } catch (error) {
-          navigation.navigate('ObrasTab' as never);
+          console.log('⚠️ goBack() falhou, tentando navegação para ObrasTab');
+          try {
+            // Tentar navegação direta para ObrasTab
+            navigation.navigate('ObrasTab' as never);
+            console.log('✅ Navegação direta para ObrasTab executada');
+          } catch (error2) {
+            console.log('⚠️ Navegação direta falhou, usando NavigationHelper');
+            NavigationHelper.navigateToObras();
+          }
         }
       } else {
+        // Para outras origens (Home, Profile), usar goBack() simples
+        console.log('🔄 Executando goBack() para origem:', originScreen);
         navigation.goBack();
       }
       
+      // Reset da flag após um tempo
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 1000);
@@ -332,6 +410,12 @@ const EditDraftScreenNew: React.FC = () => {
   };
 
   const handleSave = async (thenGoBack = false, showToast = true) => {
+    // Bloquear salvamento se o modal estiver aberto (exceto quando explicitamente chamado pelo modal)
+    if (isSavingBlocked && !thenGoBack) {
+      console.log('🚫 Salvamento bloqueado - modal aberto');
+      return;
+    }
+
     if (!title.trim()) {
       Alert.alert('Título necessário', 'Por favor, adicione um título ao seu poema.');
       return;
@@ -355,18 +439,21 @@ const EditDraftScreenNew: React.FC = () => {
         getLegacyCategory(),
         selectedTypeId,
         selectedTemplate?.id,
-        selectedUserTemplate?.id
+        selectedUserTemplate?.id,
+        theme.trim()
       );
-      
       const updatedDraft = await DraftService.getDraftById(draft.id);
       if (updatedDraft) {
         updateDraftOptimistic(updatedDraft);
       }
       
+      // Invalidar cache para garantir que a lista seja atualizada
       SimpleCache.invalidateDrafts();
+      console.log('🧹 Cache invalidado após salvar obra');
+      
       refreshDrafts();
 
-      // Verificar conquistas
+      // Verificar conquistas em segundo plano
       EnhancedAchievementService.checkAndUpdateAchievements(
         'user_current',
         'poem_edited', 
@@ -383,10 +470,11 @@ const EditDraftScreenNew: React.FC = () => {
       setHasUnsavedChanges(false);
 
       if (thenGoBack) {
+        // Usar setTimeout para garantir que o estado seja atualizado antes da navegação
         setTimeout(() => {
           handleGoBack();
         }, 100);
-        return;
+        return; // Interrompe aqui para não mostrar toast
       }
 
       if (showToast) {
@@ -394,58 +482,209 @@ const EditDraftScreenNew: React.FC = () => {
       }
 
     } catch (error) {
-      console.error('Erro ao salvar alterações:', error);
+      console.error('❌ Erro ao salvar alterações:', error);
       Alert.alert('Erro', 'Não foi possível salvar as alterações. Tente novamente.');
     }
   };
 
+  // Função para salvar e sair
   const handleSaveAndExit = () => {
+    console.log('💾 Salvando e saindo...');
+    setIsSavingBlocked(false); // Permitir salvamento
     setShowUnsavedModal(false);
-    handleSave(true, true);
+    handleSave(true, true); // Salva, sai e mostra toast
   };
 
+  // Função para descartar mudanças e sair
   const handleDiscardAndExit = () => {
+    console.log('🗑️ Descartando mudanças e saindo...');
+    setIsSavingBlocked(false); // Desbloquear salvamento
     setShowUnsavedModal(false);
     
+    // Limpar timeout de auto-save
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
       autoSaveTimeoutRef.current = null;
     }
     
+    // Restaurar conteúdo original
     setTitle(originalTitle);
     setContent(originalContent);
     setSelectedTypeId(originalTypeId);
+    
+    // Desativar flag de mudanças não salvas
     setHasUnsavedChanges(false);
     
+    // Garantir que o estado seja atualizado antes de navegar
     setTimeout(() => {
       handleGoBack();
     }, 100);
   };
 
+  // Função para cancelar e continuar editando
   const handleCancelExit = () => {
+    console.log('❌ Cancelando saída - continuando edição');
+    setIsSavingBlocked(false); // Desbloquear salvamento
     setShowUnsavedModal(false);
+    
+    // Limpar qualquer timeout de auto-save pendente
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
   };
 
+  const mapTemplateToTypeId = (templateName: string): string => {
+    switch (templateName.toLowerCase()) {
+      case 'soneto':
+        return 'soneto';
+      case 'jogral':
+        return 'jogral';
+      default:
+        return 'poesia';
+    }
+  };
+
+  const applyTemplate = (template: PoemTemplate) => {
+    console.log('🎯 EditDraft: Aplicando template:', template.name);
+    
+    Alert.alert(
+      'Aplicar Template',
+      `Deseja aplicar o template "${template.name}"? Isso irá adicionar o exemplo ao final do seu texto atual.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Aplicar',
+          onPress: () => {
+            console.log('✅ EditDraft: Template confirmado, aplicando...');
+            setSelectedTemplate(template);
+            setSelectedUserTemplate(null); // Limpar template do usuário se houver
+            setSelectedTypeId(mapTemplateToTypeId(template.name));
+            if (content.trim()) {
+              setContent(prev => `${prev}\n\n--- ${template.name} ---\n${template.example}`);
+            } else {
+              setContent(template.example);
+            }
+            setShowTemplates(false);
+            console.log('✅ EditDraft: Template aplicado com sucesso');
+          }
+        }
+      ]
+    );
+  };
+
+  // Funções para Templates do Usuário
+  const loadUserTemplates = async () => {
+    try {
+      console.log('🔄 EditDraft: Carregando templates do usuário...');
+      const templates = await UserTemplateService.getAllTemplates();
+      console.log('📁 EditDraft: Templates carregados:', templates.length, templates);
+      setUserTemplates(templates);
+    } catch (error) {
+      console.error('❌ EditDraft: Erro ao carregar templates:', error);
+    }
+  };
+
+  const handleApplyUserTemplate = async (template: UserTemplate) => {
+    try {
+      Alert.alert(
+        'Aplicar Template',
+        `Deseja aplicar o template "${template.name}"? Isso irá adicionar o conteúdo ao final do seu texto atual.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Aplicar',
+            onPress: () => {
+              setSelectedUserTemplate(template);
+              setSelectedTemplate(null); // Limpar template padrão se houver
+              if (template.categoryId && availableTypes.some(cat => cat.id === template.categoryId)) {
+                setSelectedTypeId(template.categoryId);
+              }
+              if (content.trim()) {
+                setContent(prev => `${prev}\n\n--- ${template.name} ---\n${template.content}`);
+              } else {
+                setContent(template.content);
+              }
+              setShowTemplates(false);
+              // Incrementar uso do template
+              UserTemplateService.incrementUsage(template.id);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Erro ao aplicar template:', error);
+    }
+  };
+
+  const addInspirationPrompt = (prompt: string, isTheme: boolean = false) => {
+    console.log('🎯 EditDraft: Aplicando inspiração:', prompt, 'isTheme:', isTheme);
+    
+    if (isTheme) {
+      // Para temas poderosos, adiciona ao título (conforme solicitado anteriormente)
+      setTitle(prompt);
+      console.log('✅ EditDraft: Tema aplicado ao título');
+    } else {
+      // Para inspirações textuais, adiciona ao conteúdo
+      if (content.trim()) {
+        setContent(prev => `${prev}\n\n"${prompt}"\n\n`);
+      } else {
+        setContent(`"${prompt}"\n\n`);
+      }
+      console.log('✅ EditDraft: Inspiração textual aplicada');
+    }
+    setShowInspiration(false);
+  };
+
+  const showSuccessToast = () => {
+    setShowToast(true);
+    Animated.sequence([
+      Animated.timing(toastOpacityAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacityAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowToast(false);
+    });
+  };
+
+  // Função para gerenciar estado de digitação
   const handleContentChange = (text: string) => {
+    console.log('🌟 Digitando:', text.length, 'caracteres');
     setContent(text);
     setIsTyping(true);
     
+    // Iniciar animação de pulso
+    console.log('🎨 Iniciando animação de borda');
     startBorderPulseAnimation();
     
+    // Limpar timeout anterior se existir
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
+    // Definir novo timeout para parar o estado de digitação
     typingTimeoutRef.current = setTimeout(() => {
+      console.log('⏹️ Parando animação de borda');
       setIsTyping(false);
       stopBorderPulseAnimation();
-    }, 1000);
+    }, 1000); // Para de digitar após 1 segundo de inatividade
   };
 
   const startBorderPulseAnimation = () => {
+    // Parar qualquer animação anterior
     borderPulseAnim.stopAnimation();
+    // Resetar para 0
     borderPulseAnim.setValue(0);
     
+    // Iniciar nova animação em loop
     Animated.loop(
       Animated.sequence([
         Animated.timing(borderPulseAnim, {
@@ -471,144 +710,11 @@ const EditDraftScreenNew: React.FC = () => {
     }).start();
   };
 
-  const showSuccessToast = () => {
-    setShowToast(true);
-    Animated.sequence([
-      Animated.timing(toastOpacityAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.delay(2000),
-      Animated.timing(toastOpacityAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setShowToast(false);
-    });
-  };
-
-  // Templates e inspiração
-  const loadUserTemplates = async () => {
-    try {
-      const templates = await UserTemplateService.getAllTemplates();
-      setUserTemplates(templates);
-    } catch (error) {
-      console.error('Erro ao carregar templates:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (showTemplates) {
-      loadUserTemplates();
-    }
-  }, [showTemplates]);
-
-  const applyTemplate = (template: PoemTemplate) => {
-    Alert.alert(
-      'Aplicar Template',
-      `Deseja aplicar o template "${template.name}"? Isso irá adicionar o exemplo ao final do seu texto atual.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aplicar',
-          onPress: () => {
-            setSelectedTemplate(template);
-            setSelectedUserTemplate(null);
-            
-            const mapTemplateToTypeId = (templateName: string): string => {
-              switch (templateName.toLowerCase()) {
-                case 'soneto': return 'soneto';
-                case 'jogral': return 'jogral';
-                default: return 'poesia';
-              }
-            };
-            
-            setSelectedTypeId(mapTemplateToTypeId(template.name));
-            
-            if (content.trim()) {
-              setContent(prev => `${prev}\n\n--- ${template.name} ---\n${template.example}`);
-            } else {
-              setContent(template.example);
-            }
-            setShowTemplates(false);
-          }
-        }
-      ]
-    );
-  };
-
-  const handleApplyUserTemplate = async (template: UserTemplate) => {
-    Alert.alert(
-      'Aplicar Template',
-      `Deseja aplicar o template "${template.name}"? Isso irá adicionar o conteúdo ao final do seu texto atual.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aplicar',
-          onPress: () => {
-            setSelectedUserTemplate(template);
-            setSelectedTemplate(null);
-            
-            if (template.categoryId && availableTypes.some(cat => cat.id === template.categoryId)) {
-              setSelectedTypeId(template.categoryId);
-            }
-            
-            if (content.trim()) {
-              setContent(prev => `${prev}\n\n--- ${template.name} ---\n${template.content}`);
-            } else {
-              setContent(template.content);
-            }
-            setShowTemplates(false);
-            UserTemplateService.incrementUsage(template.id);
-          }
-        }
-      ]
-    );
-  };
-
-  const addInspirationPrompt = (prompt: string, isTheme: boolean = false) => {
-    if (isTheme) {
-      setTitle(prompt);
-    } else {
-      if (content.trim()) {
-        setContent(prev => `${prev}\n\n"${prompt}"\n\n`);
-      } else {
-        setContent(`"${prompt}"\n\n`);
-      }
-    }
-    setShowInspiration(false);
-  };
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-      borderPulseAnim.stopAnimation();
-    };
-  }, []);
-
   if (loading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        backgroundColor: themeColors.background 
-      }}>
-        <Ionicons name="book" size={48} color={themeColors.primary} />
-        <Text style={{ 
-          marginTop: 16, 
-          fontSize: 18, 
-          color: themeColors.textPrimary 
-        }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <Ionicons name="book" size={48} color="#007AFF" />
+        <Text style={{ marginTop: 16, fontSize: 18, color: '#1a1a1a' }}>
           Carregando rascunho...
         </Text>
       </View>
@@ -625,9 +731,9 @@ const EditDraftScreenNew: React.FC = () => {
         backgroundColor={themeColors.background}
       />
 
-      {/* Header moderno com gradiente */}
+      {/* Header Melhorado */}
       <LinearGradient
-        colors={themeColors.gradientPrimary as any}
+        colors={isDark ? Colors.gradientNight as any : Colors.gradientPrimary as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
@@ -640,13 +746,8 @@ const EditDraftScreenNew: React.FC = () => {
       >
         <SafeAreaView edges={['top']}>
           <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-            {/* Navegação e ações */}
-            <View style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: Spacing.md 
-            }}>
+            {/* Linha superior com navegação e ações */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.md }}>
               <TouchableOpacity
                 onPress={() => {
                   if (hasUnsavedChanges) {
@@ -675,7 +776,7 @@ const EditDraftScreenNew: React.FC = () => {
               </TouchableOpacity>
 
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Status indicators */}
+                {/* Indicador de status */}
                 {hasUnsavedChanges && (
                   <View style={{
                     backgroundColor: 'rgba(255, 193, 7, 0.9)',
@@ -753,6 +854,7 @@ const EditDraftScreenNew: React.FC = () => {
                   fontSize: Typography.fontSize.lg,
                   fontWeight: Typography.fontWeight.bold,
                   color: Colors.white,
+                  textAlign: 'center',
                 }}>
                   Editando Obra
                 </Text>
@@ -809,53 +911,49 @@ const EditDraftScreenNew: React.FC = () => {
         style={{ flex: 1 }}
         contentContainerStyle={{ 
           paddingHorizontal: Spacing.lg,
-          paddingTop: Spacing.lg,
-          paddingBottom: 180
+          paddingTop: Spacing.md,
+          paddingBottom: 160 // Espaço suficiente para não sobrepor com o tab navigator
         }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-          
-          {/* Título da obra */}
+          {/* Título */}
           <View style={{
             backgroundColor: themeColors.surface,
             borderRadius: BorderRadius.xl,
-            padding: Spacing.lg,
+            padding: Spacing.xl,
             marginBottom: Spacing.lg,
-            ...Shadows.md,
+            ...Shadows.lg,
             borderWidth: 1,
-            borderColor: themeColors.border + '30',
+            borderColor: themeColors.border + '50',
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
-              <LinearGradient
-                colors={[Colors.primary, Colors.accent]}
-                style={{
-                  borderRadius: BorderRadius.full,
-                  padding: Spacing.sm,
-                  marginRight: Spacing.md,
-                }}
-              >
-                <Ionicons name="star" size={20} color={Colors.white} />
-              </LinearGradient>
+              <View style={{
+                backgroundColor: Colors.primary + '20',
+                borderRadius: BorderRadius.full,
+                padding: Spacing.sm,
+                marginRight: Spacing.md,
+              }}>
+                <Ionicons name="star" size={20} color={Colors.primary} />
+              </View>
               <Text style={{
-                fontSize: Typography.fontSize.lg,
+                fontSize: Typography.fontSize.xl,
                 fontWeight: Typography.fontWeight.bold,
                 color: themeColors.textPrimary,
               }}>
-                Título da Obra
+                ⭐ Título da Sua Obra
               </Text>
             </View>
-            
             <TextInput
               style={{
                 fontSize: Typography.fontSize.lg,
                 fontWeight: Typography.fontWeight.semibold,
                 color: themeColors.textPrimary,
-                padding: Spacing.md,
-                backgroundColor: themeColors.background,
+                padding: Spacing.base,
+                backgroundColor: themeColors.surface,
                 borderRadius: BorderRadius.lg,
-                borderWidth: 2,
-                borderColor: title.trim() ? Colors.primary + '50' : themeColors.border + '30',
+                borderWidth: 1,
+                borderColor: title.trim() ? Colors.primary : themeColors.border,
                 ...Shadows.sm,
               }}
               value={title}
@@ -866,57 +964,19 @@ const EditDraftScreenNew: React.FC = () => {
             />
           </View>
 
-          {/* Estatísticas em cards */}
-          <View style={{ 
-            flexDirection: 'row', 
-            justifyContent: 'space-between',
-            marginBottom: Spacing.lg,
-          }}>
-            <View style={{ width: '31%' }}>
-              <ModernCard
-                title="Palavras"
-                value={wordCount.toString()}
-                icon="text"
-                gradient={themeColors.gradientPrimary}
-                trend="neutral"
-                trendValue=""
-              />
-            </View>
-            <View style={{ width: '31%' }}>
-              <ModernCard
-                title="Versos"
-                value={verseCount.toString()}
-                icon="list"
-                gradient={themeColors.gradientSecondary}
-                trend="neutral"
-                trendValue=""
-              />
-            </View>
-            <View style={{ width: '31%' }}>
-              <ModernCard
-                title="Tipo"
-                value={getSelectedType()?.name || 'Poesia'}
-                icon="library"
-                gradient={themeColors.gradientAccent}
-                trend="neutral"
-                trendValue=""
-              />
-            </View>
-          </View>
-
-          {/* Estilo da obra */}
+          {/* Tipos de Obra */}
           <View style={{
             backgroundColor: themeColors.surface,
             borderRadius: BorderRadius.xl,
-            padding: Spacing.lg,
+            padding: Spacing.xl,
             marginBottom: Spacing.lg,
-            ...Shadows.md,
+            ...Shadows.lg,
             borderWidth: 1,
-            borderColor: themeColors.border + '30',
+            borderColor: themeColors.border + '50',
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg }}>
               <LinearGradient
-                colors={[Colors.accent, Colors.primary]}
+                colors={[Colors.primary, Colors.accent]}
                 style={{
                   borderRadius: BorderRadius.full,
                   padding: Spacing.sm,
@@ -925,21 +985,43 @@ const EditDraftScreenNew: React.FC = () => {
               >
                 <Ionicons name="library" size={20} color={Colors.white} />
               </LinearGradient>
-              <Text style={{
-                fontSize: Typography.fontSize.lg,
-                fontWeight: Typography.fontWeight.bold,
-                color: themeColors.textPrimary,
-              }}>
-                Estilo da Obra
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{
+                  fontSize: Typography.fontSize.xl,
+                  fontWeight: Typography.fontWeight.bold,
+                  color: themeColors.textPrimary,
+                }}>
+                  📚 Estilo da Obra
+                </Text>
+                <Text style={{
+                  fontSize: Typography.fontSize.sm,
+                  color: themeColors.textSecondary,
+                  marginTop: 2,
+                }}>
+                  Escolha o que melhor representa sua criação
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={reloadTypes}
+                style={{
+                  backgroundColor: Colors.primary + '20',
+                  borderRadius: BorderRadius.full,
+                  padding: Spacing.sm,
+                }}
+              >
+                <Ionicons name="refresh" size={16} color={Colors.primary} />
+              </TouchableOpacity>
             </View>
             
+            {/* Grid de Tipos Melhorado */}
             <View style={{ 
               flexDirection: 'row', 
               flexWrap: 'wrap', 
-              justifyContent: 'space-between',
+              justifyContent: 'flex-start',
+              alignContent: 'flex-start',
+              paddingBottom: Spacing.sm, // Adiciona padding para evitar sobreposição
             }}>
-              {availableTypes.map((type, index) => (
+              {availableTypes.map((type: any, index: number) => (
                 <TouchableOpacity
                   key={type.id}
                   onPress={() => setSelectedTypeId(type.id)}
@@ -951,28 +1033,30 @@ const EditDraftScreenNew: React.FC = () => {
                     borderColor: selectedTypeId === type.id 
                       ? Colors.primary 
                       : themeColors.border + '50',
-                    borderRadius: BorderRadius.lg,
+                    borderRadius: BorderRadius.xl,
                     padding: Spacing.md,
                     alignItems: 'center',
-                    width: '48%',
-                    marginBottom: Spacing.md,
-                    minHeight: 100,
+                    flexBasis: '32%',
+                    marginRight: Spacing.sm,
+                    minHeight: 120,
                     justifyContent: 'center',
                     ...Shadows.sm,
+                    transform: [{ scale: selectedTypeId === type.id ? 1.02 : 1 }],
+                    marginBottom: Spacing.md, // Adiciona margem inferior para melhor espaçamento
                   }}
                 >
                   <View style={{
                     backgroundColor: selectedTypeId === type.id 
                       ? 'rgba(255,255,255,0.2)' 
-                      : type.color + '20',
+                      : Colors.primary + '20',
                     borderRadius: BorderRadius.full,
-                    padding: Spacing.sm,
+                    padding: Spacing.md,
                     marginBottom: Spacing.sm,
                   }}>
                     <Ionicons 
                       name={type.icon as any} 
                       size={24} 
-                      color={selectedTypeId === type.id ? Colors.white : type.color}
+                      color={selectedTypeId === type.id ? Colors.white : Colors.primary}
                     />
                   </View>
                   <Text style={{
@@ -980,6 +1064,7 @@ const EditDraftScreenNew: React.FC = () => {
                     fontWeight: Typography.fontWeight.bold,
                     color: selectedTypeId === type.id ? Colors.white : themeColors.textPrimary,
                     textAlign: 'center',
+                    lineHeight: Typography.fontSize.sm * 1.2,
                   }}>
                     {type.name}
                   </Text>
@@ -992,15 +1077,27 @@ const EditDraftScreenNew: React.FC = () => {
               <View style={{
                 backgroundColor: Colors.primary + '10',
                 borderRadius: BorderRadius.lg,
-                padding: Spacing.md,
-                marginTop: Spacing.md,
+                padding: Spacing.lg,
+                marginTop: Spacing.lg,
                 borderLeftWidth: 4,
                 borderLeftColor: Colors.primary,
               }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xs }}>
+                  <Ionicons name="information-circle" size={16} color={Colors.primary} />
+                  <Text style={{
+                    fontSize: Typography.fontSize.base,
+                    fontWeight: Typography.fontWeight.bold,
+                    color: Colors.primary,
+                    marginLeft: Spacing.xs,
+                  }}>
+                    Sobre este estilo
+                  </Text>
+                </View>
                 <Text style={{
-                  fontSize: Typography.fontSize.sm,
+                  fontSize: Typography.fontSize.base,
                   color: themeColors.textPrimary,
                   fontStyle: 'italic',
+                  lineHeight: Typography.fontSize.base * 1.5,
                 }}>
                   💡 {getSelectedType()?.description}
                 </Text>
@@ -1008,49 +1105,159 @@ const EditDraftScreenNew: React.FC = () => {
             )}
           </View>
 
-          {/* Ferramentas criativas */}
+          {/* Template Selecionado */}
+          {selectedTemplate && (
+            <View style={{
+              backgroundColor: `${selectedTemplate.gradient[0]}15`,
+              borderRadius: BorderRadius.lg,
+              padding: Spacing.base,
+              marginBottom: Spacing.lg,
+              borderLeftWidth: 4,
+              borderLeftColor: selectedTemplate.gradient[0],
+            }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <View style={{
+                    backgroundColor: selectedTemplate.gradient[0],
+                    borderRadius: BorderRadius.full,
+                    padding: Spacing.sm,
+                    marginRight: Spacing.md,
+                  }}>
+                    <Ionicons 
+                      name={selectedTemplate.icon as any} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: Typography.fontSize.base,
+                      fontWeight: Typography.fontWeight.semibold,
+                      color: themeColors.textPrimary,
+                    }}>
+                      {selectedTemplate.name}
+                    </Text>
+                    <Text style={{
+                      fontSize: Typography.fontSize.sm,
+                      color: themeColors.textSecondary,
+                      marginTop: Spacing.xs,
+                    }}>
+                      Template Padrão
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedTemplate(null);
+                  }}
+                  style={{
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                    borderRadius: BorderRadius.full,
+                    padding: Spacing.xs,
+                  }}
+                >
+                  <Ionicons name="close" size={16} color={themeColors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Template do Usuário Selecionado */}
+          {selectedUserTemplate && (
+            <View style={{
+              backgroundColor: `${selectedUserTemplate.color}15`,
+              borderRadius: BorderRadius.lg,
+              padding: Spacing.base,
+              marginBottom: Spacing.lg,
+              borderLeftWidth: 4,
+              borderLeftColor: selectedUserTemplate.color,
+            }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <View style={{
+                    backgroundColor: selectedUserTemplate.color,
+                    borderRadius: BorderRadius.full,
+                    padding: Spacing.sm,
+                    marginRight: Spacing.md,
+                  }}>
+                    <Ionicons 
+                      name={selectedUserTemplate.icon as any} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: Typography.fontSize.base,
+                      fontWeight: Typography.fontWeight.semibold,
+                      color: themeColors.textPrimary,
+                    }}>
+                      {selectedUserTemplate.name}
+                    </Text>
+                    <Text style={{
+                      fontSize: Typography.fontSize.sm,
+                      color: themeColors.textSecondary,
+                      marginTop: Spacing.xs,
+                    }}>
+                      Meu Template
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedUserTemplate(null);
+                  }}
+                  style={{
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                    borderRadius: BorderRadius.full,
+                    padding: Spacing.xs,
+                  }}
+                >
+                  <Ionicons name="close" size={16} color={themeColors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Ferramentas Criativas */}
           <View style={{
             backgroundColor: themeColors.surface,
-            borderRadius: BorderRadius.xl,
-            padding: Spacing.lg,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.base,
             marginBottom: Spacing.lg,
-            ...Shadows.md,
-            borderWidth: 1,
-            borderColor: themeColors.border + '30',
+            ...Shadows.sm,
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
-              <LinearGradient
-                colors={[Colors.success, Colors.accent]}
-                style={{
-                  borderRadius: BorderRadius.full,
-                  padding: Spacing.sm,
-                  marginRight: Spacing.md,
-                }}
-              >
-                <Ionicons name="bulb" size={20} color={Colors.white} />
-              </LinearGradient>
-              <Text style={{
-                fontSize: Typography.fontSize.lg,
-                fontWeight: Typography.fontWeight.bold,
-                color: themeColors.textPrimary,
-              }}>
-                Ferramentas Criativas
-              </Text>
-            </View>
+            <Text style={{
+              fontSize: Typography.fontSize.base,
+              fontWeight: Typography.fontWeight.semibold,
+              color: themeColors.textPrimary,
+              marginBottom: Spacing.sm,
+            }}>
+              Ferramentas Criativas
+            </Text>
             
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <TouchableOpacity
-                onPress={() => setShowTemplates(true)}
+                onPress={() => {
+                  console.log('🎯 EditDraft: Botão Templates pressionado');
+                  setShowTemplates(true);
+                }}
                 style={{
                   flex: 1,
                   backgroundColor: themeColors.background,
                   borderRadius: BorderRadius.lg,
-                  padding: Spacing.lg,
+                  padding: Spacing.base,
                   alignItems: 'center',
-                  marginRight: Spacing.sm,
                   borderWidth: 1,
-                  borderColor: themeColors.border + '50',
-                  ...Shadows.sm,
+                  borderColor: themeColors.border,
                 }}
               >
                 <Ionicons name="library-outline" size={24} color={Colors.primary} />
@@ -1065,17 +1272,18 @@ const EditDraftScreenNew: React.FC = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => setShowInspiration(true)}
+                onPress={() => {
+                  console.log('🎯 EditDraft: Botão Inspiração pressionado');
+                  setShowInspiration(true);
+                }}
                 style={{
                   flex: 1,
                   backgroundColor: themeColors.background,
                   borderRadius: BorderRadius.lg,
-                  padding: Spacing.lg,
+                  padding: Spacing.base,
                   alignItems: 'center',
-                  marginLeft: Spacing.sm,
                   borderWidth: 1,
-                  borderColor: themeColors.border + '50',
-                  ...Shadows.sm,
+                  borderColor: themeColors.border,
                 }}
               >
                 <Ionicons name="bulb-outline" size={24} color={Colors.accent} />
@@ -1091,34 +1299,115 @@ const EditDraftScreenNew: React.FC = () => {
             </View>
           </View>
 
-          {/* Editor de conteúdo */}
+          {/* Estatísticas */}
+          <View style={{
+            backgroundColor: themeColors.surface,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+          }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: Typography.fontSize.xs,
+                  color: themeColors.textSecondary,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                }}>
+                  Palavras
+                </Text>
+                <Text style={{
+                  fontSize: Typography.fontSize.xl,
+                  fontWeight: Typography.fontWeight.bold,
+                  color: Colors.primary,
+                  marginTop: 2,
+                }}>
+                  {wordCount}
+                </Text>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: Typography.fontSize.xs,
+                  color: themeColors.textSecondary,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                }}>
+                  Versos
+                </Text>
+                <Text style={{
+                  fontSize: Typography.fontSize.xl,
+                  fontWeight: Typography.fontWeight.bold,
+                  color: Colors.success,
+                  marginTop: 2,
+                }}>
+                  {verseCount}
+                </Text>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: Typography.fontSize.xs,
+                  color: themeColors.textSecondary,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                }}>
+                  Tipo
+                </Text>
+                <Text style={{
+                  fontSize: Typography.fontSize.base,
+                  fontWeight: Typography.fontWeight.semibold,
+                  color: Colors.accent,
+                  marginTop: 2,
+                }}>
+                  {getSelectedType()?.name || 'Poesia'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Editor de Conteúdo */}
           <View style={{
             backgroundColor: themeColors.surface,
             borderRadius: BorderRadius.xl,
-            padding: Spacing.lg,
+            padding: Spacing.xl,
             marginBottom: Spacing.xl,
-            ...Shadows.md,
+            ...Shadows.lg,
             borderWidth: 1,
-            borderColor: themeColors.border + '30',
+            borderColor: themeColors.border + '50',
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg }}>
-              <LinearGradient
-                colors={[Colors.accent, Colors.warning]}
-                style={{
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{
+                  backgroundColor: Colors.accent + '20',
                   borderRadius: BorderRadius.full,
                   padding: Spacing.sm,
                   marginRight: Spacing.md,
-                }}
-              >
-                <Ionicons name="heart" size={20} color={Colors.white} />
-              </LinearGradient>
-              <Text style={{
-                fontSize: Typography.fontSize.lg,
-                fontWeight: Typography.fontWeight.bold,
-                color: themeColors.textPrimary,
-              }}>
-                Sua Criação
-              </Text>
+                }}>
+                  <Ionicons name="heart" size={20} color={Colors.accent} />
+                </View>
+                <Text style={{
+                  fontSize: Typography.fontSize.xl,
+                  fontWeight: Typography.fontWeight.bold,
+                  color: themeColors.textPrimary,
+                }}>
+                  ✨ Sua Criação
+                </Text>
+              </View>
+              {isAutoSaving && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="cloud-upload" size={16} color={Colors.success} />
+                  <Text style={{
+                    fontSize: Typography.fontSize.xs,
+                    color: Colors.success,
+                    marginLeft: Spacing.xs,
+                    fontWeight: Typography.fontWeight.medium,
+                  }}>
+                    Salvando...
+                  </Text>
+                </View>
+              )}
             </View>
             
             <Animated.View style={{
@@ -1127,11 +1416,11 @@ const EditDraftScreenNew: React.FC = () => {
               borderColor: borderPulseAnim.interpolate({
                 inputRange: [0, 1],
                 outputRange: [
-                  isTyping ? Colors.primary : (content.trim() ? Colors.primary + '50' : themeColors.border + '30'),
-                  isTyping ? Colors.accent : (content.trim() ? Colors.primary + '50' : themeColors.border + '30')
+                  isTyping ? '#007AFF' : (content.trim() ? Colors.primary : themeColors.border),
+                  isTyping ? '#00D4FF' : (content.trim() ? Colors.primary : themeColors.border)
                 ]
               }),
-              shadowColor: isTyping ? Colors.primary : 'transparent',
+              shadowColor: isTyping ? '#00D4FF' : 'transparent',
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: borderPulseAnim.interpolate({
                 inputRange: [0, 1],
@@ -1146,13 +1435,14 @@ const EditDraftScreenNew: React.FC = () => {
               <TextInput
                 style={{
                   fontSize: Typography.fontSize.base,
-                  lineHeight: Typography.fontSize.base * 1.6,
+                  lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
                   color: themeColors.textPrimary,
                   minHeight: 200,
-                  padding: Spacing.lg,
-                  backgroundColor: themeColors.background,
+                  padding: Spacing.base,
+                  backgroundColor: themeColors.surface,
                   borderRadius: BorderRadius.lg,
                   textAlignVertical: 'top',
+                  borderWidth: 0, // Remove border do TextInput, já que está na View animada
                 }}
                 value={content}
                 onChangeText={handleContentChange}
@@ -1163,7 +1453,7 @@ const EditDraftScreenNew: React.FC = () => {
               />
             </Animated.View>
             
-            {/* Contador inspirador */}
+            {/* Contador de palavras inspirador */}
             {content.length > 0 && (
               <View style={{ 
                 flexDirection: 'row', 
@@ -1177,7 +1467,7 @@ const EditDraftScreenNew: React.FC = () => {
                   color: themeColors.textSecondary,
                   fontStyle: 'italic',
                 }}>
-                  {wordCount} palavras de pura inspiração
+                  {content.split(' ').filter((word: string) => word.length > 0).length} palavras de pura inspiração
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="sparkles" size={16} color={Colors.accent} />
@@ -1216,19 +1506,36 @@ const EditDraftScreenNew: React.FC = () => {
               fontSize: Typography.fontSize.xl,
               fontWeight: Typography.fontWeight.bold,
               color: themeColors.textPrimary,
+              flex: 1,
             }}>
               Templates de Poesia
             </Text>
-            <TouchableOpacity
-              onPress={() => setShowTemplates(false)}
-              style={{
-                backgroundColor: themeColors.surface,
-                borderRadius: BorderRadius.full,
-                padding: Spacing.sm,
-              }}
-            >
-              <Ionicons name="close" size={24} color={themeColors.textPrimary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowTemplates(false);
+                  setShowCreateTemplate(true);
+                }}
+                style={{
+                  backgroundColor: Colors.primary,
+                  borderRadius: BorderRadius.full,
+                  padding: Spacing.sm,
+                  marginRight: Spacing.sm,
+                }}
+              >
+                <Ionicons name="add" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowTemplates(false)}
+                style={{
+                  backgroundColor: themeColors.surface,
+                  borderRadius: BorderRadius.full,
+                  padding: Spacing.sm,
+                }}
+              >
+                <Ionicons name="close" size={24} color={themeColors.textPrimary} />
+              </TouchableOpacity>
+            </View>
           </View>
           
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: Spacing.lg }}>
@@ -1272,7 +1579,7 @@ const EditDraftScreenNew: React.FC = () => {
               </TouchableOpacity>
             ))}
 
-            {/* Templates do usuário */}
+            {/* Templates do Usuário */}
             {userTemplates.length > 0 && (
               <>
                 <Text style={{
@@ -1282,23 +1589,39 @@ const EditDraftScreenNew: React.FC = () => {
                   marginTop: Spacing.xl,
                   marginBottom: Spacing.md,
                 }}>
-                  Meus Templates
+                  🔖 Meus Templates
                 </Text>
                 
-                {userTemplates.map((template) => (
+                {userTemplates.map((template: any) => (
                   <TouchableOpacity
                     key={template.id}
                     onPress={() => handleApplyUserTemplate(template)}
                     style={{
-                      backgroundColor: themeColors.surface,
+                      backgroundColor: selectedUserTemplate?.id === template.id 
+                        ? template.color + '20' 
+                        : themeColors.surface,
                       borderRadius: BorderRadius.lg,
-                      padding: Spacing.lg,
+                      padding: Spacing.base,
                       marginBottom: Spacing.md,
                       borderLeftWidth: 4,
                       borderLeftColor: template.color,
+                      borderWidth: selectedUserTemplate?.id === template.id ? 2 : 0,
+                      borderColor: selectedUserTemplate?.id === template.id ? template.color : 'transparent',
                       ...Shadows.sm,
                     }}
                   >
+                    {selectedUserTemplate?.id === template.id && (
+                      <View style={{
+                        position: 'absolute',
+                        top: Spacing.sm,
+                        right: Spacing.sm,
+                        backgroundColor: template.color,
+                        borderRadius: BorderRadius.full,
+                        padding: Spacing.xs,
+                      }}>
+                        <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                      </View>
+                    )}
                     <View style={{
                       flexDirection: 'row',
                       alignItems: 'center',
@@ -1310,24 +1633,97 @@ const EditDraftScreenNew: React.FC = () => {
                         padding: Spacing.sm,
                         marginRight: Spacing.md,
                       }}>
-                        <Ionicons name={template.icon as any} size={20} color={Colors.white} />
+                        <Ionicons name={template.icon as any} size={20} color="#FFFFFF" />
                       </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{
+                          fontSize: Typography.fontSize.base,
+                          fontWeight: Typography.fontWeight.semibold,
+                          color: themeColors.textPrimary,
+                        }}>
+                          {template.name}
+                        </Text>
+                        <Text style={{
+                          fontSize: Typography.fontSize.sm,
+                          color: themeColors.textSecondary,
+                        }}>
+                          {template.description}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={{
+                      backgroundColor: 'rgba(0,0,0,0.05)',
+                      borderRadius: BorderRadius.base,
+                      padding: Spacing.sm,
+                    }}>
                       <Text style={{
-                        fontSize: Typography.fontSize.base,
-                        fontWeight: Typography.fontWeight.semibold,
-                        color: themeColors.textPrimary,
+                        fontSize: Typography.fontSize.sm,
+                        color: themeColors.textSecondary,
+                        fontStyle: 'italic',
                       }}>
-                        {template.name}
+                        {template.content.length > 100 
+                          ? template.content.substring(0, 100) + '...' 
+                          : template.content}
                       </Text>
                     </View>
-                    <Text style={{
-                      fontSize: Typography.fontSize.sm,
-                      color: themeColors.textSecondary,
-                    }}>
-                      {template.description}
-                    </Text>
                   </TouchableOpacity>
                 ))}
+              </>
+            )}
+
+            {/* Seção para criar primeiro template quando não há nenhum */}
+            {userTemplates.length === 0 && (
+              <>
+                <Text style={{
+                  fontSize: Typography.fontSize.lg,
+                  fontWeight: Typography.fontWeight.semibold,
+                  color: themeColors.textPrimary,
+                  marginTop: Spacing.xl,
+                  marginBottom: Spacing.md,
+                }}>
+                  🔖 Meus Templates
+                </Text>
+                
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowTemplates(false);
+                    setShowCreateTemplate(true);
+                  }}
+                  style={{
+                    backgroundColor: themeColors.surface,
+                    borderRadius: BorderRadius.lg,
+                    padding: Spacing.lg,
+                    marginBottom: Spacing.md,
+                    borderWidth: 2,
+                    borderColor: themeColors.border,
+                    borderStyle: 'dashed',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...Shadows.sm,
+                  }}
+                >
+                  <Ionicons 
+                    name="add-circle-outline" 
+                    size={32} 
+                    color={Colors.primary} 
+                    style={{ marginBottom: Spacing.sm }}
+                  />
+                  <Text style={{
+                    fontSize: Typography.fontSize.base,
+                    fontWeight: Typography.fontWeight.semibold,
+                    color: Colors.primary,
+                    marginBottom: Spacing.xs,
+                  }}>
+                    Criar Template desta Obra
+                  </Text>
+                  <Text style={{
+                    fontSize: Typography.fontSize.sm,
+                    color: themeColors.textSecondary,
+                    textAlign: 'center',
+                  }}>
+                    Salve esta obra como template para usar depois
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </ScrollView>
@@ -1362,7 +1758,7 @@ const EditDraftScreenNew: React.FC = () => {
             </TouchableOpacity>
           </View>
           
-          {/* Abas de inspiração */}
+          {/* Abas de Inspiração */}
           <View style={{
             flexDirection: 'row',
             paddingHorizontal: Spacing.lg,
@@ -1443,12 +1839,12 @@ const EditDraftScreenNew: React.FC = () => {
         </SafeAreaView>
       </Modal>
 
-      {/* Toast de sucesso */}
+      {/* Toast de Sucesso */}
       {showToast && (
         <Animated.View
           style={{
             position: 'absolute',
-            top: 60,
+            top: 50, // Reduzido de 100 para 50 para ficar mais próximo do topo
             left: 20,
             right: 20,
             backgroundColor: Colors.success,
@@ -1473,7 +1869,7 @@ const EditDraftScreenNew: React.FC = () => {
             fontSize: Typography.fontSize.sm,
             fontWeight: Typography.fontWeight.semibold,
           }}>
-            Obra salva com sucesso!
+            Poema salvo!
           </Text>
         </Animated.View>
       )}
@@ -1484,6 +1880,15 @@ const EditDraftScreenNew: React.FC = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={handleCancelExit}
+        onShow={() => {
+          // Bloquear completamente qualquer salvamento quando modal abrir
+          console.log('🚫 Modal aberto - bloqueando salvamento');
+          setIsSavingBlocked(true);
+          if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+            autoSaveTimeoutRef.current = null;
+          }
+        }}
       >
         <View style={{
           flex: 1,
@@ -1594,16 +1999,16 @@ const EditDraftScreenNew: React.FC = () => {
       <CreateTemplateModal
         visible={showCreateTemplate}
         onClose={() => setShowCreateTemplate(false)}
-        onSave={() => {
+        onTemplateCreated={async (template: any) => {
+          await loadUserTemplates();
           setShowCreateTemplate(false);
-          loadUserTemplates();
+          Alert.alert('✅ Sucesso', 'Template criado com sucesso!');
         }}
-        initialTitle={title}
         initialContent={content}
-        initialCategoryId={selectedTypeId}
+        initialCategory={selectedTypeId}
       />
     </KeyboardAvoidingView>
   );
 };
 
-export default EditDraftScreenNew;
+export default EditDraftScreen;

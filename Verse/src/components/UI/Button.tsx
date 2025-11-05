@@ -1,8 +1,8 @@
 // src/components/UI/Button.tsx
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, Animated, Easing } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, BorderRadius, Spacing, Shadows, CommonStyles, Animation } from '../../styles/DesignSystem';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Animation, CommonStyles } from '../../styles/DesignSystem';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -57,7 +57,7 @@ const Button: React.FC<ButtonProps> = ({
     }
   }, [pressedIn, scaleAnim]);
   const getButtonStyle = (): ViewStyle => {
-    let baseStyle;
+    let baseStyle: ViewStyle = {};
     
     // Usar os novos estilos do DesignSystem
     switch (variant) {
@@ -82,14 +82,6 @@ const Button: React.FC<ButtonProps> = ({
       default:
         baseStyle = { ...CommonStyles.buttonPrimary };
     }
-    
-    // Aplicar opacidade se desabilitado
-    if (disabled) {
-      baseStyle.opacity = 0.6;
-      baseStyle.backgroundColor = variant === 'outline' || variant === 'ghost' 
-        ? 'transparent' 
-        : Colors.gray300;
-    }
 
     // Size variations
     const sizeStyles = {
@@ -113,11 +105,21 @@ const Button: React.FC<ButtonProps> = ({
       },
     };
 
-    return {
+    const finalStyle: ViewStyle = {
       ...baseStyle,
       ...sizeStyles[size],
       width: fullWidth ? '100%' : 'auto',
     };
+    
+    // Aplicar opacidade se desabilitado
+    if (disabled) {
+      finalStyle.opacity = 0.6;
+      finalStyle.backgroundColor = variant === 'outline' || variant === 'ghost' 
+        ? 'transparent' 
+        : Colors.gray300;
+    }
+
+    return finalStyle;
   };
 
   const getTextStyle = (): TextStyle => {

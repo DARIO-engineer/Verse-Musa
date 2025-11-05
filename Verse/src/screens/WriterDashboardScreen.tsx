@@ -396,7 +396,7 @@ const WriterDashboardScreen: React.FC = () => {
               alignItems: 'center',
               ...Shadows.sm,
             }}>
-              <Ionicons name="target" size={48} color={themeColors.textSecondary} />
+              <Ionicons name="analytics-outline" size={48} color={themeColors.textSecondary} />
               <Text style={{
                 fontSize: Typography.fontSize.base,
                 color: themeColors.textSecondary,

@@ -8,6 +8,7 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Typography, Spacing } from '../../styles/DesignSystem';
 
 interface SplashScreenProps {
@@ -80,13 +81,34 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
       <StatusBar barStyle="light-content" backgroundColor="#1A237E" />
       
       {/* Fundo com gradiente animado */}
-      <View style={styles.backgroundGradient} />
+      <LinearGradient
+        colors={['#1A237E', '#283593', '#3949AB', '#1A237E']}
+        locations={[0, 0.3, 0.7, 1]}
+        style={styles.backgroundGradient}
+      />
       
       {/* Partículas flutuantes */}
       <View style={styles.particles}>
-        <Animated.View style={[styles.particle, styles.particle1, { opacity: fadeAnim }]} />
-        <Animated.View style={[styles.particle, styles.particle2, { opacity: fadeAnim }]} />
-        <Animated.View style={[styles.particle, styles.particle3, { opacity: fadeAnim }]} />
+        <Animated.View style={[styles.particle, styles.particle1, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }]} />
+        <Animated.View style={[styles.particle, styles.particle2, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }]} />
+        <Animated.View style={[styles.particle, styles.particle3, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }]} />
+        <Animated.View style={[styles.particle, styles.particle4, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }]} />
+        <Animated.View style={[styles.particle, styles.particle5, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }]} />
       </View>
       
       {/* Conteúdo principal */}
@@ -205,6 +227,14 @@ const styles = StyleSheet.create({
   particle3: {
     top: '80%',
     left: '70%',
+  },
+  particle4: {
+    top: '40%',
+    left: '80%',
+  },
+  particle5: {
+    top: '30%',
+    right: '10%',
   },
   content: {
     flex: 1,

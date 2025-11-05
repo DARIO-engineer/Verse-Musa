@@ -13,10 +13,7 @@
       "backgroundColor": "#1A237E"
     },
     "assetBundlePatterns": [
-      "assets/verse.png",
-      "assets/musa.png",
-      "assets/notification-icon.png",
-      "assets/favicon.png"
+      "assets/**/*"
     ],
     "ios": {
       "supportsTablet": true
@@ -32,7 +29,15 @@
       "enableAapt2": true,
       "enableProguardInReleaseBuilds": true,
       "enableSeparateBuildPerCPUArchitecture": true,
-      "universalApk": false
+      "universalApk": false,
+      "enableShrinkResourcesInReleaseBuilds": true,
+      "enableDexMergingInReleaseBuilds": true,
+      "enableR8": true,
+      "versionCode": 1,
+      "splits": {
+        "abi": true,
+        "density": false
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

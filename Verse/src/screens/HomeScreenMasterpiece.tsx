@@ -90,13 +90,13 @@ const HomeScreenMasterpiece: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      title: '✏️ Criar Obra',
+      title: 'Criar Obra',
       icon: 'create-outline',
       gradient: Array.isArray(themeColors.gradientPrimary) ? themeColors.gradientPrimary : Colors.gradientPrimary,
       onPress: () => navigation.navigate('CreateTab' as never),
     },
     {
-      title: '📚 Obras',
+      title: 'Obras',
       icon: 'documents-outline',
       gradient: Array.isArray(themeColors.gradientSecondary) ? themeColors.gradientSecondary : Colors.gradientSecondary,
       onPress: () => navigation.navigate('ObrasTab' as never),
@@ -311,7 +311,7 @@ const HomeScreenMasterpiece: React.FC = () => {
                 trend={(profile?.currentStreak || 0) > 0 ? "up" : "neutral"}
                 trendValue={
                   (profile?.currentStreak || 0) === 0 
-                    ? "🚀 Vamos lá!" 
+                    ? "Vamos lá!" 
                     : (profile?.currentStreak || 0) > 1 ? '+1' : 'Nova!'
                 }
               />
@@ -414,7 +414,7 @@ const HomeScreenMasterpiece: React.FC = () => {
               <Text style={{
                 fontSize: Typography.fontSize.xl,
                 fontWeight: Typography.fontWeight.bold,
-                color: isDark ? Colors.textPrimaryDark : Colors.textPrimary,
+                color: themeColors.textPrimary,
                 marginBottom: Spacing.lg,
               }}>
                 Obras Recentes

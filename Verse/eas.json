@@ -25,13 +25,7 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease",
-        "enableProguardInReleaseBuilds": true,
-        "enableSeparateBuildPerCPUArchitecture": true,
-        "universalApk": false,
-        "enableHermes": true,
-        "enableShrinkResourcesInReleaseBuilds": true,
-        "enableMinifyInReleaseBuilds": true
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
         "NODE_ENV": "production",
