@@ -1,6 +1,8 @@
 // src/services/ChatService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { MusaChatRateLimiter } from './RateLimiter';
 
 export interface ChatMessage {
   id: string;
@@ -28,9 +30,11 @@ const API_KEY = 'AIzaSyANb4yl1wmgi7I3psgEnDlwJ3JWFcb-t7A';
 class ChatServiceClass {
   private genAI: GoogleGenerativeAI | null = null;
   private isInitialized = false;
+  private rateLimiter: MusaChatRateLimiter;
 
   constructor() {
     this.initialize();
+    this.rateLimiter = new MusaChatRateLimiter();
   }
 
   private async initialize() {
@@ -116,17 +120,50 @@ class ChatServiceClass {
     
     await this.saveChatHistory(history);
     return conversationId;
-  }
-
   async sendMessageToMusa(message: string, conversationId: string): Promise<ChatMessage> {
     console.log('🎭 Musa: Tentando enviar mensagem para a API do Gemini...');
     console.log('🔑 API Key disponível:', API_KEY ? 'Sim' : 'Não');
     console.log('✅ Musa inicializada:', this.isInitialized);
     console.log('🤖 GenAI disponível:', this.genAI ? 'Sim' : 'Não');
     
+    // Verificar rate limit ANTES de chamar a API
+    const canProceed = await this.rateLimiter.canMakeRequest();
+    if (!canProceed) {
+      const errorMsg = await this.rateLimiter.getErrorMessage();
+      const remaining = await this.rateLimiter.getRemainingRequests();
+      
+      console.warn(`⚠️ Rate limit atingido. Requisições restantes: ${remaining}`);
+      
+      Alert.alert(
+        '⏳ Limite Atingido',
+        errorMsg,
+        [{ text: 'OK' }]
+      );
+      
+      const rateLimitMessage: ChatMessage = {
+        id: `ratelimit_${Date.now()}`,
+        content: `🕒 ${errorMsg}\n\nEnquanto isso, posso te ajudar com respostas rápidas:\n\n${this.getLocalResponse(message)}`,
+        isUser: false,
+        timestamp: new Date(),
+        conversationId,
+        type: 'error',
+        metadata: {
+          model: 'rate-limited',
+        }
+      };
+      
+      await this.saveMessage(rateLimitMessage);
+      return rateLimitMessage;
+    }
+    
     try {
       if (!this.isInitialized || !this.genAI) {
         console.error('❌ Musa AI não está inicializada');
+        throw new Error('Musa AI não está inicializada');
+      }
+
+      // Registrar requisição no rate limiter
+      await this.rateLimiter.recordRequest(); console.error('❌ Musa AI não está inicializada');
         throw new Error('Musa AI não está inicializada');
       }
 
@@ -165,6 +202,12 @@ class ChatServiceClass {
     } catch (error) {
       console.error('❌ Erro ao comunicar com a Musa:', error);
       console.error('📝 Detalhes do erro:', error instanceof Error ? error.message : String(error));
+      
+      Alert.alert(
+        '❌ Erro na Conversa',
+        'Não foi possível enviar sua mensagem para Musa. Verifique sua conexão.',
+        [{ text: 'OK' }]
+      );
       
       // Resposta de fallback em caso de erro
       const errorMessage: ChatMessage = {
