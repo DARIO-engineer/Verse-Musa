@@ -18,7 +18,14 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EAS_SKIP_AUTO_FINGERPRINT": "1"
+        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "NODE_ENV": "production",
+        "EXPO_NO_DOTENV": "1"
+      },
+      "cache": {
+        "key": "preview-cache",
+        "cacheDefaultPaths": true,
+        "customPaths": ["node_modules"]
       }
     },
     "optimized": {

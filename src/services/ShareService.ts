@@ -2,7 +2,7 @@
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import { Platform, Share, Alert } from 'react-native';
-import { Draft } from './DraftService';
+import type { Draft } from './DraftService';
 import { ErrorHandlingService } from './ErrorHandlingService';
 
 export class ShareService {

@@ -1,5 +1,5 @@
 // src/utils/testNewFeatures.ts
-import { CloudBackupService } from '../services/CloudBackupService';
+import { LocalBackupService } from '../services/LocalBackupService';
 import { ShareService } from '../services/ShareService';
 import { MusaChatRateLimiter } from '../services/RateLimiter';
 import { Draft } from '../services/DraftService';
@@ -24,35 +24,25 @@ Em versos que brotam da mente`,
 };
 
 /**
- * TESTE 1: Cloud Backup Service
+ * TESTE 1: Local Backup Service
  */
-export async function testCloudBackup() {
-  console.log('🧪 === TESTE 1: Cloud Backup ===');
+export async function testLocalBackup() {
+  console.log('🧪 === TESTE 1: Local Backup ===');
   
   try {
-    // Inicializar Firebase
-    console.log('1️⃣ Inicializando Firebase...');
-    await CloudBackupService.initialize();
-    console.log('✅ Firebase inicializado');
-
-    // Verificar se tem backup
-    console.log('\n2️⃣ Verificando backup existente...');
-    const hasBackup = await CloudBackupService.hasBackup();
-    console.log(`📦 Tem backup? ${hasBackup ? 'SIM' : 'NÃO'}`);
-
     // Fazer backup de um rascunho
-    console.log('\n3️⃣ Fazendo backup do rascunho de teste...');
-    await CloudBackupService.backupSingleDraft(testDraft);
-    console.log('✅ Backup concluído');
+    console.log('1️⃣ Fazendo backup do rascunho de teste...');
+    await LocalBackupService.backupSingleDraft(testDraft);
+    console.log('✅ Backup local concluído');
 
-    // Verificar data do último backup
-    console.log('\n4️⃣ Verificando último backup...');
-    const lastBackup = await CloudBackupService.getLastBackupDate();
-    console.log(`🕒 Último backup: ${lastBackup?.toLocaleString() || 'Nunca'}`);
+    // Fazer backup de múltiplos
+    console.log('\n2️⃣ Fazendo backup de múltiplos rascunhos...');
+    await LocalBackupService.backupAllDrafts([testDraft]);
+    console.log('✅ Backup em lote concluído');
 
     // Restaurar rascunhos
-    console.log('\n5️⃣ Restaurando da nuvem...');
-    const restored = await CloudBackupService.restoreAllDrafts();
+    console.log('\n3️⃣ Restaurando do backup local...');
+    const restored = await LocalBackupService.restoreAllDrafts();
     console.log(`✅ ${restored.length} rascunho(s) restaurados:`);
     restored.forEach(draft => {
       console.log(`   - ${draft.title} (${draft.id})`);
@@ -168,7 +158,7 @@ export async function testRateLimiter() {
 export async function testAll() {
   console.log('🚀 === INICIANDO TESTES COMPLETOS ===\n');
   
-  await testCloudBackup();
+  await testLocalBackup();
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   await testShareService();
@@ -180,5 +170,5 @@ export async function testAll() {
 }
 
 // Para usar no console do React Native Debugger ou navegador:
-// import { testAll, testCloudBackup, testShareService, testRateLimiter } from './utils/testNewFeatures';
+// import { testAll, testLocalBackup, testShareService, testRateLimiter } from './utils/testNewFeatures';
 // testAll();

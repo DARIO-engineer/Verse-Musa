@@ -28,31 +28,18 @@
       "gradleCommand": ":app:assembleRelease",
       "enableAapt2": true,
       "enableProguardInReleaseBuilds": true,
-      "enableSeparateBuildPerCPUArchitecture": true,
-      "universalApk": false,
+      "enableSeparateBuildPerCPUArchitecture": false,
+      "universalApk": true,
       "enableShrinkResourcesInReleaseBuilds": true,
       "enableDexMergingInReleaseBuilds": true,
       "enableR8": true,
-      "versionCode": 1,
-      "splits": {
-        "abi": true,
-        "density": false
-      }
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#4FC3F7"
-        }
-      ],
-      "expo-font",
-      "expo-asset",
-      "expo-web-browser"
+      "expo-font"
     ],
     "extra": {
       "firebaseApiKey": "AIzaSyBq4jcP5Zgnjk7Gn5spSSrlbAb2e4JQU-M",

@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Draft } from '../services/DraftService';
+import type { Draft } from '../services/DraftService';
 import { ShareService } from '../services/ShareService';
 
 interface SharePoemButtonProps {
