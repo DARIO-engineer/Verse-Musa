@@ -18,6 +18,11 @@ export class StorageCleanupService {  // Chaves conhecidas do storage
       console.log('🧹 Iniciando limpeza de dados corrompidos...');
       
       const allKeys = await AsyncStorage.getAllKeys();
+      if (!allKeys || allKeys.length === 0) {
+        console.log('📦 Storage vazio, nada para limpar');
+        return;
+      }
+
       let cleanedCount = 0;
 
       for (const key of allKeys) {
@@ -33,14 +38,19 @@ export class StorageCleanupService {  // Chaves conhecidas do storage
         } catch (error) {
           console.warn(`⚠️ Erro ao verificar chave ${key}:`, error);
           // Se há erro ao ler, provavelmente está corrompido
-          await AsyncStorage.removeItem(key);
-          cleanedCount++;
+          try {
+            await AsyncStorage.removeItem(key);
+            cleanedCount++;
+          } catch (removeError) {
+            console.error(`❌ Erro ao remover chave ${key}:`, removeError);
+          }
         }
       }
 
       console.log(`✅ Limpeza concluída. ${cleanedCount} itens removidos.`);
     } catch (error) {
       console.error('❌ Erro durante limpeza do storage:', error);
+      throw error;
     }
   }
 

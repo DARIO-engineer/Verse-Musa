@@ -170,35 +170,39 @@ export class ErrorHandlingService {
    * Configura handlers globais de erro
    */
   static setupGlobalHandlers(): void {
-    // Handler para erros não capturados
-    if (typeof ErrorUtils !== 'undefined') {
-      const originalHandler = ErrorUtils.getGlobalHandler();
-      
-      ErrorUtils.setGlobalHandler((error: any, isFatal?: boolean) => {
-        console.error('🚨 Global Error Handler:', error);
+    try {
+      // Handler para erros não capturados
+      if (typeof ErrorUtils !== 'undefined') {
+        const originalHandler = ErrorUtils.getGlobalHandler();
         
-        // Registrar o erro
-        this.handleError(error, 'GLOBAL_ERROR');
-        
-        // Chamar handler original se existir
-        if (originalHandler) {
-          originalHandler(error, isFatal);
-        }
-      });
-    }
+        ErrorUtils.setGlobalHandler((error: any, isFatal?: boolean) => {
+          console.error('🚨 Global Error Handler:', error);
+          
+          // Registrar o erro
+          this.handleError(error, 'GLOBAL_ERROR');
+          
+          // Chamar handler original se existir
+          if (originalHandler) {
+            originalHandler(error, isFatal);
+          }
+        });
+      }
 
-    // Handler para promises rejeitadas
-    if (typeof global !== 'undefined' && global.HermesInternal?.enablePromiseRejectionTracker) {
-      global.HermesInternal.enablePromiseRejectionTracker({
-        allRejections: true,
-        onUnhandled: (id: number, rejection: any) => {
-          console.error('🚨 Unhandled Promise Rejection:', rejection);
-          this.handleError(rejection, 'PROMISE_REJECTION');
-        },
-        onHandled: (id: number) => {
-          // Promise foi tratada depois
-        },
-      });
+      // Handler para promises rejeitadas
+      if (typeof global !== 'undefined' && global.HermesInternal?.enablePromiseRejectionTracker) {
+        global.HermesInternal.enablePromiseRejectionTracker({
+          allRejections: true,
+          onUnhandled: (id: number, rejection: any) => {
+            console.error('🚨 Unhandled Promise Rejection:', rejection);
+            this.handleError(rejection, 'PROMISE_REJECTION');
+          },
+          onHandled: (id: number) => {
+            // Promise foi tratada depois
+          },
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao configurar handlers globais:', error);
     }
   }
 

@@ -4,7 +4,6 @@ import AppNavigatorOfflineFirst from './src/navigation/AppNavigatorOfflineFirst'
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/components/UI/SplashScreen';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DraftsProvider } from './src/contexts/DraftsContext';
@@ -67,13 +66,3 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
-
-

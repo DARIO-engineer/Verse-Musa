@@ -1,47 +1,66 @@
-# Verse-Musa 📖
+# Muse - App de Poesia e Criação Literária
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## 📱 Sobre o Projeto
+Muse é um aplicativo móvel React Native desenvolvido com Expo para criação, edição e gestão de obras poéticas. O app oferece recursos avançados de IA para inspiração e correção, sistema de conquistas, templates personalizáveis e muito mais.
 
-App cristão para rascunhos literários. Um espaço onde a fé se expressa em palavras, iluminando cada verso, conto e reflexão.
+## 🏗️ Estrutura do Projeto
 
-## 🚀 Começando
+```
+Muse/
+├── docs/                           # Documentação do projeto
+│   ├── changelogs/                 # Histórico de mudanças
+│   ├── api/                        # Documentação de APIs
+│   └── GUIA_NAVEGACAO.md          # Guia de navegação
+├── design-system/                  # Sistema de design e tokens
+├── src/                           # Código fonte principal
+│   ├── components/                # Componentes reutilizáveis
+│   ├── contexts/                  # Context providers
+│   ├── hooks/                     # Custom hooks
+│   ├── navigation/                # Configuração de navegação
+│   ├── screens/                   # Telas do aplicativo
+│   ├── services/                  # Serviços e APIs
+│   ├── styles/                    # Estilos globais
+│   └── utils/                     # Utilitários
+├── assets/                        # Recursos visuais
+├── android/                       # Configuração Android
+├── tests/                         # Arquivos de teste
+├── scripts/                       # Scripts de automação
+└── temp/                          # Arquivos temporários
+```
 
-### Pré-requisitos
+## 🚀 Tecnologias Principais
+- **React Native** com Expo
+- **TypeScript** para tipagem estática
+- **React Navigation** para navegação
+- **AsyncStorage** para persistência local
+- **Expo Linear Gradient** para efeitos visuais
+- **Ionicons** para ícones
 
-- Node.js (versão 16 ou superior)
-- npm ou yarn
-- Android Studio (para Android)
+## 🎯 Recursos Principais
+- ✍️ **Editor Avançado** com animações de borda pulsante
+- 🤖 **IA Integrada** (Gemini, Claude, GPT) para inspiração e correção
+- 🏆 **Sistema de Conquistas** com progresso detalhado
+- 📊 **Estatísticas Avançadas** com contagem precisa de categorias
+- 🎨 **Templates Personalizáveis** para diferentes tipos de obra
+- 💾 **Cache Inteligente** com invalidação automática
+- 🎭 **Categorias Dinâmicas** criadas pelo usuário
 
-### Instalação
+## 🛠️ Scripts Disponíveis
+- `npm start` - Inicia o servidor de desenvolvimento
+- `npm run android` - Executa no Android
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/DARIO-engineer/Verse-Musa.git
-   cd Verse-Musa
-   ```
+## 📚 Documentação
+Consulte a pasta `docs/` para documentação detalhada sobre:
+- Changelogs de funcionalidades
+- Documentação de APIs
+- Guias de navegação e uso
 
-2. Instale as dependências:
-   ```bash
-   npm install
-   # ou
-   yarn install
-   ```
 
-3. Inicie o servidor Metro:
-   ```bash
-   npx react-native start
-   ```
+## 🔧 Configuração
+1. Clone o repositório
+2. Execute `npm install`
+3. Configure as variáveis de ambiente necessárias
+4. Execute `npm start`
 
-4. Execute o aplicativo:
-   - Android:
-     ```bash
-     npx react-native run-android
-     ```
-
-## 📄 Licença
-
-Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
-
-## ✉️ Contato
-
-Dário Pimentel - deurickpimentel@gmail.com
+---
+*Desenvolvido com ❤️ para escritores e poetas*
