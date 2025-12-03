@@ -1,6 +1,6 @@
 // src/services/ShareService.ts
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import { Platform, Share, Alert } from 'react-native';
 import { Draft } from './DraftService';
 import { ErrorHandlingService } from './ErrorHandlingService';
@@ -14,10 +14,8 @@ export class ShareService {
       const message = this.formatPoemText(draft);
       
       if (Platform.OS === 'web') {
-        // Web usa Clipboard API
         await this.shareOnWeb(message);
       } else {
-        // Mobile usa Share API nativo
         await Share.share({
           message,
           title: draft.title || 'Meu Poema',
@@ -51,25 +49,26 @@ export class ShareService {
     const content = draft.content;
     const category = draft.category || 'Poesia';
 
-    return `
-📖 ${title}
-🏷️ ${category}
+    return `📖 ${title}\n🏷️ ${category}\n\n${content}\n\n---\nCriado com Verso e Musa 🎭`;
+  }
+
+  /**
+   * Compartilha poema como imagem estilizada
+   */
   static async shareAsImage(
     draft: Draft,
     backgroundColor: string = '#1A237E',
     textColor: string = '#FFFFFF'
   ): Promise<void> {
     try {
-      // Gerar SVG do poema
-      const svgContent = this.generatePoemSVG(draft, backgroundColor, textColor);
-      
-      // Salvar SVG como arquivo temporário
-      const fileUri = `${FileSystem.cacheDirectory}poem_${draft.id}.svg`;
-      await FileSystem.writeAsStringAsync(fileUri, svgContent);
+      const svg = this.generatePoemSVG(draft, backgroundColor, textColor);
+      const filename = `${draft.title.replace(/[^a-z0-9]/gi, '_')}.svg`;
+      const file = new File(Paths.cache, filename);
 
-      // Compartilhar arquivo
+      await file.write(svg);
+
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'image/svg+xml',
           dialogTitle: 'Compartilhar Poema',
         });
@@ -85,7 +84,7 @@ export class ShareService {
           'Compartilhamento não está disponível neste dispositivo.',
           [{ text: 'OK' }]
         );
-        throw new Error('Compartilhamento não disponível neste dispositivo');
+        throw new Error('Compartilhamento não disponível');
       }
 
       console.log('✅ Poema compartilhado como imagem');
@@ -96,17 +95,6 @@ export class ShareService {
         'Não foi possível criar a imagem do poema.',
         [{ text: 'OK' }]
       );
-      ErrorHandlingService.handleError(error as Error, 'SHARE_IMAGE');
-      throw error;
-    }
-  }     });
-      } else {
-        throw new Error('Compartilhamento não disponível neste dispositivo');
-      }
-
-      console.log('✅ Poema compartilhado como imagem');
-    } catch (error) {
-      console.error('❌ Erro ao compartilhar imagem:', error);
       ErrorHandlingService.handleError(error as Error, 'SHARE_IMAGE');
       throw error;
     }
@@ -123,7 +111,6 @@ export class ShareService {
     const title = draft.title || 'Sem título';
     const content = draft.content;
     
-    // Quebrar linhas longas
     const lines = content.split('\n');
     const maxCharsPerLine = 35;
     const wrappedLines: string[] = [];
@@ -152,32 +139,21 @@ export class ShareService {
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="800" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
   <rect width="800" height="${totalHeight}" fill="${backgroundColor}"/>
-  
-  <!-- Decorative border -->
   <rect x="30" y="30" width="740" height="${totalHeight - 60}" 
         fill="none" stroke="${textColor}" stroke-width="2" opacity="0.3"/>
-  
-  <!-- Title -->
   <text x="400" y="70" text-anchor="middle" 
         font-family="Georgia, serif" font-size="32" 
         font-weight="bold" fill="${textColor}">
     ${this.escapeXml(title)}
   </text>
-  
-  <!-- Divider -->
   <line x1="200" y1="90" x2="600" y2="90" 
         stroke="${textColor}" stroke-width="1" opacity="0.5"/>
-  
-  <!-- Poem content -->
   ${wrappedLines.map((line, index) => `
   <text x="400" y="${startY + index * lineHeight}" text-anchor="middle"
         font-family="Georgia, serif" font-size="20" fill="${textColor}">
     ${this.escapeXml(line)}
   </text>`).join('')}
-  
-  <!-- Watermark -->
   <text x="400" y="${totalHeight - 20}" text-anchor="middle"
         font-family="Arial, sans-serif" font-size="14" 
         fill="${textColor}" opacity="0.4">
@@ -195,15 +171,42 @@ export class ShareService {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  /**
+   * Compartilha na web (copia para clipboard)
+   */
+  private static async shareOnWeb(text: string): Promise<void> {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      alert('✅ Poema copiado para área de transferência!');
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('✅ Poema copiado!');
+    }
+  }
+
+  /**
+   * Exporta poema como arquivo de texto
+   */
   static async exportAsFile(draft: Draft): Promise<void> {
     try {
       const content = this.formatPoemText(draft);
       const fileName = `${draft.title?.replace(/[^a-z0-9]/gi, '_') || 'poema'}.txt`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      const file = new File(Paths.document, fileName);
 
-      await FileSystem.writeAsStringAsync(fileUri, content);
+      await file.write(content);
+      
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'text/plain',
           dialogTitle: 'Exportar Poema',
         });
@@ -226,20 +229,24 @@ export class ShareService {
       ErrorHandlingService.handleError(error as Error, 'EXPORT_FILE');
       throw error;
     }
-  }   alert('✅ Poema copiado!');
-    }
   }
 
   /**
-  static async shareCollection(drafts: Draft[], collectionName: string = 'Minha Coletânea'): Promise<void> {
+   * Compartilha múltiplos poemas como coletânea
+   */
+  static async shareCollection(
+    drafts: Draft[], 
+    collectionName: string = 'Minha Coletânea'
+  ): Promise<void> {
     try {
       const content = this.formatCollection(drafts, collectionName);
       const fileName = `${collectionName.replace(/[^a-z0-9]/gi, '_')}.txt`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      const file = new File(Paths.document, fileName);
 
-      await FileSystem.writeAsStringAsync(fileUri, content);
+      await file.write(content);
+      
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'text/plain',
           dialogTitle: 'Compartilhar Coletânea',
         });
@@ -262,41 +269,13 @@ export class ShareService {
       ErrorHandlingService.handleError(error as Error, 'SHARE_COLLECTION');
       throw error;
     }
-  }   throw error;
-    }
-  }
-
-  /**
-   * Compartilha múltiplos poemas como coletânea
-   */
-  static async shareCollection(drafts: Draft[], collectionName: string = 'Minha Coletânea'): Promise<void> {
-    try {
-      const content = this.formatCollection(drafts, collectionName);
-      const fileName = `${collectionName.replace(/[^a-z0-9]/gi, '_')}.txt`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-      await FileSystem.writeAsStringAsync(fileUri, content);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'text/plain',
-          dialogTitle: 'Compartilhar Coletânea',
-        });
-      }
-
-      console.log('✅ Coletânea compartilhada');
-    } catch (error) {
-      console.error('❌ Erro ao compartilhar coletânea:', error);
-      ErrorHandlingService.handleError(error as Error, 'SHARE_COLLECTION');
-      throw error;
-    }
   }
 
   /**
    * Formata coletânea de poemas
    */
   private static formatCollection(drafts: Draft[], collectionName: string): string {
-    const header = `
-╔═══════════════════════════════════════╗
+    const header = `╔═══════════════════════════════════════╗
 ║                                       ║
 ║     ${collectionName.padStart(20)}     ║
 ║                                       ║
@@ -310,8 +289,7 @@ Criado com Verso e Musa 🎭
 `;
 
     const poems = drafts.map((draft, index) => {
-      return `
-${index + 1}. ${draft.title || 'Sem título'}
+      return `${index + 1}. ${draft.title || 'Sem título'}
 ${'─'.repeat(40)}
 
 ${draft.content}

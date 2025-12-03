@@ -55,16 +55,16 @@
       "expo-web-browser"
     ],
     "extra": {
-      "eas": {
-        "projectId": "8e517c77-dfb8-46d8-a81f-cb43c95ebb6d"
-      },
       "firebaseApiKey": "AIzaSyBq4jcP5Zgnjk7Gn5spSSrlbAb2e4JQU-M",
       "firebaseAuthDomain": "verso-e-musa-b2976.firebaseapp.com",
       "firebaseProjectId": "verso-e-musa-b2976",
       "firebaseStorageBucket": "verso-e-musa-b2976.firebasestorage.app",
       "firebaseMessagingSenderId": "626922109603",
       "firebaseAppId": "1:626922109603:android:acd0e1b0673c664925dd16",
-      "firebaseMeasurementId": "SEU_MEASUREMENT_ID_AQUI"
+      "firebaseMeasurementId": "SEU_MEASUREMENT_ID_AQUI",
+      "eas": {
+        "projectId": "e13e1745-54b5-4117-9771-c6e60a312120"
+      }
     }
   }
 }
