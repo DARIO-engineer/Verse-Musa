@@ -1,66 +1,33 @@
-# Muse - App de Poesia e Criação Literária
+# ✍️ Verse-Musa: AI-Powered Poetry & Verse Generator
 
-## 📱 Sobre o Projeto
-Muse é um aplicativo móvel React Native desenvolvido com Expo para criação, edição e gestão de obras poéticas. O app oferece recursos avançados de IA para inspiração e correção, sistema de conquistas, templates personalizáveis e muito mais.
+Verse-Musa é uma aplicação móvel construída com **React Native** que utiliza Inteligência Artificial para ajudar os utilizadores a criar poesia, letras e versos únicos. Ele preenche a lacuna entre escrita criativa e IA moderna.
 
-## 🏗️ Estrutura do Projeto
+## 🚀 Funcionalidades
+- **Geração de IA:** Obtenha inspiração criativa instantânea para sua escrita.
+- **Multiplataforma:** Construído com React Native para uma experiência fluida.
+- **UI Minimalista:** Focado na experiência de escrita.
 
-```
-Muse/
-├── docs/                           # Documentação do projeto
-│   ├── changelogs/                 # Histórico de mudanças
-│   ├── api/                        # Documentação de APIs
-│   └── GUIA_NAVEGACAO.md          # Guia de navegação
-├── design-system/                  # Sistema de design e tokens
-├── src/                           # Código fonte principal
-│   ├── components/                # Componentes reutilizáveis
-│   ├── contexts/                  # Context providers
-│   ├── hooks/                     # Custom hooks
-│   ├── navigation/                # Configuração de navegação
-│   ├── screens/                   # Telas do aplicativo
-│   ├── services/                  # Serviços e APIs
-│   ├── styles/                    # Estilos globais
-│   └── utils/                     # Utilitários
-├── assets/                        # Recursos visuais
-├── android/                       # Configuração Android
-├── tests/                         # Arquivos de teste
-├── scripts/                       # Scripts de automação
-└── temp/                          # Arquivos temporários
-```
+## 🛠️ Stack de Tecnologia
+- **Framework:** React Native
+- **Linguagem:** JavaScript / TypeScript
+- **Integração de IA:** GEMINI API
+- **Ambiente:** Node.js & Expo/CLI
 
-## 🚀 Tecnologias Principais
-- **React Native** com Expo
-- **TypeScript** para tipagem estática
-- **React Navigation** para navegação
-- **AsyncStorage** para persistência local
-- **Expo Linear Gradient** para efeitos visuais
-- **Ionicons** para ícones
+## 📦 Instalação e Configuração
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com
+Use o código com cuidado.
 
-## 🎯 Recursos Principais
-- ✍️ **Editor Avançado** com animações de borda pulsante
-- 🤖 **IA Integrada** (Gemini, Claude, GPT) para inspiração e correção
-- 🏆 **Sistema de Conquistas** com progresso detalhado
-- 📊 **Estatísticas Avançadas** com contagem precisa de categorias
-- 🎨 **Templates Personalizáveis** para diferentes tipos de obra
-- 💾 **Cache Inteligente** com invalidação automática
-- 🎭 **Categorias Dinâmicas** criadas pelo usuário
+Instale as dependências:
+bash
+npm install
+Use o código com cuidado.
 
-## 🛠️ Scripts Disponíveis
-- `npm start` - Inicia o servidor de desenvolvimento
-- `npm run android` - Executa no Android
+Execute o projeto:
+bash
+npx expo start
+Use o código com cuidado.
 
-## 📚 Documentação
-Consulte a pasta `docs/` para documentação detalhada sobre:
-- Changelogs de funcionalidades
-- Documentação de APIs
-- Guias de navegação e uso
-
-
-## 🔧 Configuração
-1. Clone o repositório
-2. Execute `npm install`
-3. Configure as variáveis de ambiente necessárias
-4. Execute `npm start`
-
----
-*Desenvolvido com ❤️ para escritores e poetas*
+🧠 Por que construí isto?
+Este projeto foi um mergulho profundo no desenvolvimento móvel e na integração de IA, com foco em como gerenciar chamadas de API assíncronas dentro de uma interface de usuário móvel, mantendo o desempenho.
